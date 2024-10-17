@@ -10,27 +10,38 @@ type vector = float list
 Definirajte enotske vektorje `i`, `j` in `k` v treh dimenzijah.
 [*----------------------------------------------------------------------------*)
 
+let i = [1.; 0.; 0.]
+let j = [0.; 1.; 0.]
+let k = [0.; 0.; 1.]
 
 (*----------------------------------------------------------------------------*]
 Napišite funkcijo `razteg : float -> vector -> vector`, ki vektor, 
 predstavljen s seznamom števil s plavajočo vejico, pomnoži z danim skalarjem.
 [*----------------------------------------------------------------------------*)
 
-let rec razteg = ()
+(* Ne vem, zakaj je ta rec in *)
+
+let razteg faktor vektor = List.map (fun x -> faktor *. x) vektor
+
+let razteg' faktor vektor = List.map (( *. ) faktor) vektor (* delna uporaba mnozenja*)
+
+let razteg'' faktor = List.map (( *. ) faktor) (* delna uporaba, nardiš funkcijo pač*)
 
 (*----------------------------------------------------------------------------*]
 Napišite funkcijo `sestej : vector -> vector -> vector`, ki vrne vsoto dveh 
 vektorjev.
 [*----------------------------------------------------------------------------*)
 
-let rec sestej = ()
+let rec sestej v1 v2 = List.map2 ( +. ) v1 v2
+
+let sestej' = List.map2 ( +. ) (* Delna uporaba!! *)
 
 (*----------------------------------------------------------------------------*]
 Napišite funkcijo `skalarni_produkt : vector -> vector -> float`, ki izračuna 
 skalarni produkt dveh vektorjev
 [*----------------------------------------------------------------------------*)
 
-let rec skalarni_produkt = ()
+let rec skalarni_produkt v1 v2 = List.fold_left ( +. ) 0. (List.map2 ( *. ) v1 v2)
 
 (*----------------------------------------------------------------------------*]
 Napišite funkcijo `norma : vector -> float`, ki vrne evklidsko normo vektorja.
@@ -43,7 +54,7 @@ Napišite funkcijo `projeciraj : vector -> vector -> vector`, ki izračuna
 projekcijo prvega vektorja na drugega.
 [*----------------------------------------------------------------------------*)
 
-let rec projeciraj = ()
+let rec projeciraj v1 v2 = () (* razteg ((skalarni_produkt v1 v2) /(?) norma v1) v2*)
 
 (*----------------------------------------------------------------------------*]
 Napišite funkcijo `ovij : string -> string -> string`, ki sprejme ime HTML 
