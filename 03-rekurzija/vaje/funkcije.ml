@@ -4,7 +4,19 @@
  Definirajte pomožno funkcijo za obračanje seznamov.
 [*----------------------------------------------------------------------------*)
 
-let rec reverse = ()
+let reverse sez =
+  (* Pofejkan iz ocaml.org, kjer sem prej vidla ta primer*)
+  (* Ampak tud dobra vaja, da pač razmisl, kaksno funkcijo naloga
+  zahteva od tebe in kaj je logično, da sprejme.
+  Pač tko alpa drgač kle rabš pomožno*)
+  let rec aux acc =
+    function
+    | [] -> acc
+    | h :: t -> aux (h :: acc) t (* Ne pozab zavedanja, da kar si tm 
+    napisala kot brez zadnga argumenta lahko vedno notr kličeš z zadnim
+    oziroma itak morš. Kle mi more mal bolj kliknt tole še.*)
+  in
+  aux [] sez
 
 (*----------------------------------------------------------------------------*]
  Funkcija [repeat x n] vrne seznam [n] ponovitev vrednosti [x]. Za neprimerne
@@ -16,7 +28,13 @@ let rec reverse = ()
  - : string list = []
 [*----------------------------------------------------------------------------*)
 
-let rec repeat = ()
+let repeat x n =
+  let rec aux acc x n =
+    match n with
+    | a when a <= 0 -> []
+    | _ -> aux (x :: acc) x (n - 1)
+  in
+  aux [] x n   
 
 (*----------------------------------------------------------------------------*]
  Funkcija [range] sprejme število in vrne seznam vseh celih števil od 0 do
