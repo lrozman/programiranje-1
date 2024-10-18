@@ -4,7 +4,7 @@
  Definirajte pomožno funkcijo za obračanje seznamov.
 [*----------------------------------------------------------------------------*)
 
-let reverse sez =
+(* let reverse sez =
   (* Pofejkan iz ocaml.org, kjer sem prej vidla ta primer*)
   (* Ampak tud dobra vaja, da pač razmisl, kaksno funkcijo naloga
   zahteva od tebe in kaj je logično, da sprejme.
@@ -16,7 +16,18 @@ let reverse sez =
     napisala kot brez zadnga argumenta lahko vedno notr kličeš z zadnim
     oziroma itak morš. Kle mi more mal bolj kliknt tole še.*)
   in
-  aux [] sez
+  aux [] sez *)
+(* Neki mi teži, da ma ta expression type unit, ko ga hočem pognat, 
+ne vem več, kaj je foram tkoda grem direkt copy pasteat, da vidm kaj *)
+
+let rev list =
+  let rec aux acc = function
+    | [] -> acc
+    | h :: t -> aux (h :: acc) t
+  in
+  aux [] list
+
+(* okej, don't get, kaj je bil problem*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [repeat x n] vrne seznam [n] ponovitev vrednosti [x]. Za neprimerne
@@ -29,10 +40,12 @@ let reverse sez =
 [*----------------------------------------------------------------------------*)
 
 let repeat x n =
-  let rec aux acc x n =
-    match n with
-    | a when a <= 0 -> []
-    | _ -> aux (x :: acc) x (n - 1)
+  let rec aux acc x =
+    function
+    | a when a < 0 || a = 0 -> acc  (* Pazi na te pogoje, 
+    najprej si dala kle -> [] namest -> acc in pol je seveda skos vračal
+    prazen seznam *)
+    | n -> aux (x :: acc) x (n - 1)
   in
   aux [] x n   
 
@@ -46,7 +59,14 @@ Pri tem ne smete uporabbiti vgrajene funkcije [List.init].
  - : int list = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10]
 [*----------------------------------------------------------------------------*)
 
-let rec range = ()
+(* List.init si poglej *)
+let range n =
+  let rec aux acc n =
+    match n with
+    | a when a < 0 -> acc
+    | n -> aux (n :: acc) (n - 1)
+  in
+  aux [] n 
 
 (*----------------------------------------------------------------------------*]
  Funkcija [map f list] sprejme seznam [list] oblike [x0; x1; x2; ...] in
@@ -59,7 +79,25 @@ let rec range = ()
  - : int list = [2; 3; 4; 5; 6]
 [*----------------------------------------------------------------------------*)
 
-let rec map = ()
+let map' f list = (* a js te stvari delam narobe oziroma neumno? *)
+  let rec aux acc f list =
+    match list with
+    | [] -> acc
+    | x :: xs -> aux (acc @ [f x]) f xs
+  in
+  aux [] f list
+
+  (* Aha, apparently ne rabš še enkrat notr dajat stvari, k so
+  že argumenti krovne funkcije!
+  Popravljeno: *)
+
+let map f list = 
+  let rec aux acc list =
+    match list with
+    | [] -> acc
+    | x :: xs -> aux (acc @ [f x]) xs
+  in
+  aux [] list
 
 (*----------------------------------------------------------------------------*]
  Časovna zahtevnost operatorja [@] je linearna v prvem argumentu, poskušajte 
@@ -67,6 +105,23 @@ let rec map = ()
  Pri tem ne smete uporabiti vgrajene funkcije [List.rev] ali [List.rev_append].
 [*----------------------------------------------------------------------------*)
 
+(* Ne vem list, kaj misljo. Zdej gledam repno rekurzijo s predavanj
+in vidm, da bi navadno rekurzijo napisal tkole npr:
+let rec vsota =
+  function
+  | [] -> 0
+  | glava :: rep -> glava + vsota rep
+in pol pač so šele te pomožne funkcije, k sm jih js zard ocaml.org vidla prej
+
+Pol je pa map napisu tkole, btw:
+let map' f seznam =
+  let rec aux acc =
+    function
+    | [] -> List.rev acc
+    | glava :: rep -> aux (f glava :: acc) rep
+  in
+  aux [] seznam
+  *)
 let rec reverse = ()
 
 (*----------------------------------------------------------------------------*]
@@ -78,6 +133,8 @@ let rec reverse = ()
 [*----------------------------------------------------------------------------*)
 
 let rec map_tlrec = ()
+
+(* VPRAŠAJ NA VAJAH TEDVA *)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [mapi] je ekvivalentna python kodi:
@@ -96,7 +153,13 @@ let rec map_tlrec = ()
  - : int list = [0; 1; 2; 5; 6; 7]
 [*----------------------------------------------------------------------------*)
 
-let rec mapi = ()
+let mapi f = 
+  let rec aux acc i =
+    function
+    | [] -> acc
+    | x :: xs -> aux (acc @ [f x i]) (i + 1) xs
+  in
+  aux [] 0
 
 (*----------------------------------------------------------------------------*]
  Funkcija [zip] sprejme dva seznama in vrne seznam parov istoležnih
@@ -109,7 +172,18 @@ let rec mapi = ()
  Exception: Failure "Different lengths of input lists.".
 [*----------------------------------------------------------------------------*)
 
-let rec zip = ()
+(* VPRAŠAJ NA VAJAH: Pač seprav a se tko dela tko, s temi pomožnimi
+rekurzivnimi? Ker js to vse delam isto, pa ne vem, a je to ok al ne. *)
+
+let zip list1 list2 = 
+  let rec aux acc list1 list2 =
+    match (list1, list2) with
+    | ([], []) -> acc
+    | (x :: xs, y :: ys) -> aux (acc @ [(x, y)]) xs ys
+    | (_, _) -> failwith "Different lengths of input lists."
+  in
+  aux [] list1 list2
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [unzip] je inverz funkcije [zip], torej sprejme seznam parov
@@ -120,7 +194,14 @@ let rec zip = ()
  - : int list * string list = ([0; 1; 2], ["a"; "b"; "c"])
 [*----------------------------------------------------------------------------*)
 
-let rec unzip = ()
+let unzip = 
+  let rec aux acc1 acc2 =
+    function
+    | [] -> (acc1, acc2)
+    | x :: xs -> aux (acc1 @ [fst x]) (acc2 @ [snd x]) xs
+  in
+  aux [] []
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [unzip_tlrec] je repno rekurzivna različica funkcije [unzip].
@@ -210,3 +291,131 @@ let rec exists = ()
 [*----------------------------------------------------------------------------*)
 
 let rec first = ()
+
+
+
+
+
+
+
+
+
+(* ------------------------------------------------------------- *)
+(* VPRAŠAJ NA VAJAH? *)
+
+(* btw btw, tkole recimo zgleda rekurzija brez pomožne, kjer to ni smiselno:
+let rec last = function 
+| [] -> None 
+| x::[] -> Some x
+| _ :: t -> last t ;;
+*)
+
+let rec drop_while f = 
+  function
+  | [] -> []
+  | x :: xs when f x -> drop_while f xs
+  | list -> list
+
+(* VPRAŠAJ NA VAJAH TE STVARI IZ DN:
+Pač moje vprašanje je, a pač je sam men najlaži tko delat te sezname 
+al se ubistvu tko (z rekurzijo) dela te sezname. In a je bolš met brez
+pomoznih, če se da, al kaj (cca a nej privzamemo, da hocmo repno rekurzivne
+oziroma a to sploh to pomen .... ? )*)
+
+let take n list =
+  let rec aux acc n list =
+    match list, n with
+    | ([], _) -> acc
+    | (x :: xs, n) when n > 0 -> aux (acc @ [x]) (n - 1) xs
+    | (_, _) -> acc
+  in
+  aux [] n list
+
+
+  (* VPRAŠAJ NA VAJAH: *)
+  let stevke c n =
+    let rec aux acc n =
+      match n with (* Ali je bolj pregledno, če pustim to, namesto da dam function ?*)
+      | 0 -> acc
+      | _ -> aux ((Int.rem n c) :: acc) (n / c)
+    in
+    aux [] n
+  (* Ali je dovolj pregledno, da se da razbrati sploh ?
+  Pri vseh iz tega sklopa preveri še, ali preveč kompliciraš,
+  ali je lepa rešitev in ali se da narediti lepše*)
+
+(* Btw, kle maš izomorfizem, če maš funkcije iz AxB v funkcije iz BxA,
+totalno neuporabno:
+let psi1 f =
+  let f' a b = f b a in
+  f'
+  *)
+
+(* VPRAŠAJ NA VAJAH *)
+let phi3 (a, (b, c)) = ((a, b), c)
+
+let psi3 ((a, b), c) = (a, (b, c))
+
+(* Ali so kateri oklepaji nepotrebni? *)
+
+let phi3' a (b, c) = ((a, b), c)
+
+let psi3' (a, b) c = a (b, c)
+
+(* Vem, da ni isto, ampak zanima me, ali torej naloga hoče prvo opcijo
+- ki je čisto LMN in nič PROG? *)
+
+(* VPRAŠAJ TOLE: *)
+let phi7 f =
+  let f' c = fst (f c) in
+  let f'' c = snd (f c) in
+  f', f''
+
+let psi7 (f, g) =
+  let f' c = (f c, g c) in
+  f'
+
+
+(* ODSTRANJEVANJE ODVEČNIH NIČEL ?
+No, there's no pattern that matches against the end of a list. It's not 
+an attractive structure in OCaml because it takes linear time to find 
+the end of a list. OCaml pattern matching is supposed to be fast.
+
+You can reverse your list and match the beginning of the reversed list. 
+It's only a constant factor slower than finding the end of a list.
+*)
+
+(* + Ali lahko uporabljamo vgrajene funkcije ? *)
+
+let pocisti p =
+  let rec nicle =
+    function
+    | x :: xs when x = 0 -> nicle xs
+    | a -> a
+  in
+  p
+  |> List.rev
+  |> nicle
+  |> List.rev
+
+(* in *)
+let odvod p = 
+  let odstrani_glavo =
+    function
+    | []-> []
+    | x :: xs -> xs
+  in
+  p 
+  |> List.mapi (fun i x -> i * x)
+  |> odstrani_glavo
+
+(* DEF. VERIŽENJA! Poglej si še enkrat in nej ti zares klikne (02)*)
+
+(* Ali lahko tako pustim? *)
+let ( +++ ) p1 p2 =
+  let rec aux acc p1 p2 =
+    match p1, p2 with
+    | a, b when a = [] || b = [] -> acc @ a @ b
+    | x :: xs, y :: ys -> aux (acc @ [x + y]) xs ys
+  in
+  pocisti (aux [] p1 p2)
