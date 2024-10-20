@@ -487,3 +487,66 @@ let ( ++. ) : odvedljiva -> odvedljiva -> odvedljiva =
 
 let ( //. ) : odvedljiva -> odvedljiva -> odvedljiva =
   fun (f, f') (g, g') -> ((fun x -> f x /. g x), (fun x -> (f' x *. g x -. f x *. g' x) /. (g x) ** 2.)) 
+
+
+let izpis p =
+  let sup n = "\u" ^ "{U+208" ^ string_of_int n ^ "}" in  (* KAKO NAREST UTF TE KODE ?*)
+  let rec aux acc i =
+    function
+    | [] -> acc
+    | x :: xs when x = 0 -> aux acc (i + 1) xs
+    | x :: xs when x > 0 -> 
+      if i <> 0
+        then match x with
+          (* A bi se dal tko nekak narest
+          da se nekje vmes neki poimenuje ?? !*)
+          (* | 1 -> let clen = ["+"; "x" ^ (sup i)] in
+          | n -> let clen = ["+"; string_of_int n; "x" ^ (sup i)] in *)
+          | 1 -> aux (["+"; "x" ^ (sup i)] @ acc) (i + 1) xs
+          | n -> aux (["+"; string_of_int n; "x" ^ (sup i)] @ acc) (i + 1) xs
+        else aux (["+"; string_of_int x]) (i + 1) xs
+    | x :: xs when x < 0 ->
+      if i <> 0
+        then match x with
+          | -1 -> aux (["-"; "x" ^ (sup i)] @ acc) (i + 1) xs
+          | n -> aux (["-"; string_of_int (abs n); "x" ^ (sup i)] @ acc) (i + 1) xs
+        else aux (["-"; string_of_int (abs x)]) (i + 1) xs
+  in 
+  let seznam = aux [] 0 p in
+  match seznam with
+  | [] -> "Polinom ni bil podan"
+  | x :: xs -> let seznam = xs in
+  String.concat " " seznam
+
+
+  (* zasilna, z ^ :*)
+let izpis' p =
+  let rec aux acc i =
+    function
+    | [] -> acc
+    | x :: xs when x = 0 -> aux acc (i + 1) xs
+    | x :: xs when x > 0 -> 
+      if i <> 0
+        then match x with
+          (* A bi se dal tko nekak narest
+          da se nekje vmes neki poimenuje ?? !*)
+          (* | 1 -> let clen = ["+"; "x" ^ (sup i)] in
+          | n -> let clen = ["+"; string_of_int n; "x" ^ (sup i)] in *)
+          | 1 -> aux (["+"; "x^" ^ string_of_int i] @ acc) (i + 1) xs
+          | n -> aux (["+"; string_of_int n; "x^" ^ string_of_int i] @ acc) (i + 1) xs
+        else aux (["+"; string_of_int x]) (i + 1) xs
+    | x :: xs when x < 0 ->
+      if i <> 0
+        then match x with
+          | -1 -> aux (["-"; "x^" ^ string_of_int i] @ acc) (i + 1) xs
+          | n -> aux (["-"; string_of_int (abs n); "x^" ^ string_of_int i] @ acc) (i + 1) xs
+        else aux (["-"; string_of_int (abs x)]) (i + 1) xs
+  in 
+  let seznam = aux [] 0 p in
+  match seznam with
+  | [] -> "Polinom ni bil podan"
+  | x :: xs -> let seznam = xs in
+  String.concat " " seznam
+
+  (* Ali je neumno narejeno? ce bi lahko poimenovala člen in naredila v unem tud en
+  if x > 0 ["+"] else ["-"] pa tko, bi blo lahko lepš?*)
