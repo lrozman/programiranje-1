@@ -419,3 +419,71 @@ let ( +++ ) p1 p2 =
     | x :: xs, y :: ys -> aux (acc @ [x + y]) xs ys
   in
   pocisti (aux [] p1 p2)
+
+
+(* Ali lahko še kakšno funkcijo uporabim ? 
+... Samo verjetno to pomeni, da nekaj delam narobe ...
+let repeat x n =
+
+  *)
+
+  (* množenje polinomov, ( *** ) *)
+  let ( *** ) p1 p2 =
+    let repeat x n =
+      let rec aux acc x =
+        function
+        | a when a < 0 || a = 0 -> acc
+        | n -> aux (x :: acc) x (n - 1)
+      in
+      aux [] x n 
+    in 
+    let rec mnozenje_s_clenom acc clen stopnja = (* p2 *)
+      function
+      | [] -> (repeat 0 stopnja) @ acc
+      | x :: xs -> mnozenje_s_clenom (acc @ [clen * x]) clen stopnja xs
+    in
+    let rec aux acc i p1 p2 = (* če ne bi imela zgoraj, bi verjetno rabila "delni" ? *)
+      match p1 with
+      | [] -> acc
+      | x :: xs -> aux (acc +++ (mnozenje_s_clenom [] x i p2)) (i + 1) xs p2
+    in
+  pocisti (aux [] 0 p1 p2)
+
+  (* VPRAŠAJ NA VAJAH, KAJ SEM PREZAKOMPLICIRALA! IN PREMISLI!*)
+  (* In ali je okej, da uporabljam tukaj notri +++ ? (in pocisti) 
+  Lahko to delam, ne da dajem te funkcije še v ***? *)
+
+  let vrednost p a =
+    let rec aux acc p i =
+      match p with
+      | [] -> acc
+      | x :: xs -> aux (acc + int_of_float (float_of_int a ** i) * x) xs (i +. 1.)
+    in
+    aux 0 p 0.
+
+(* Blazno grdo? *)
+
+
+(* IZPIS ?!?!?! Gnezdenje matchov ?? *)
+
+
+
+(* SAMODEJNO ODVAJANJE : *)
+type odvedljiva = (float -> float) * (float -> float)
+
+let vrednost (odv : odvedljiva) = fst odv
+
+let odvod (odv : odvedljiva) = snd odv
+(* ?? *)
+(* Kako mu povemo, da je to tipa odvedljiva ? *)
+
+let konstanta a : odvedljiva = ((fun x -> a), (fun x -> 0.)) 
+
+let identiteta : odvedljiva = ((fun x -> x), (fun x -> 1.))
+
+(* Razloži ? *)
+let ( ++. ) : odvedljiva -> odvedljiva -> odvedljiva =
+  fun (f, f') (g, g') -> ((fun x -> f x *. g x), (fun x -> f' x *. g x +. f x *. g' x))
+
+let ( //. ) : odvedljiva -> odvedljiva -> odvedljiva =
+  fun (f, f') (g, g') -> ((fun x -> f x /. g x), (fun x -> (f' x *. g x -. f x *. g' x) /. (g x) ** 2.)) 
