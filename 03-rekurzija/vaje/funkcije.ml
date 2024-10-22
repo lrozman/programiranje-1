@@ -225,8 +225,14 @@ let rec unzip_tlrec = ()
  - : int = 12
 [*----------------------------------------------------------------------------*)
 
-let rec loop = ()
-
+let rec loop condition f x =
+  match (condition x) with
+  | true -> loop condition f (f x)
+  | false -> x
+ (* ali naredim samo z if nekako ? 
+  Al je ubistvu if itak problem, ker morš met isti tip, 
+    pa je to pač nadomestek ? *)
+ 
 (*----------------------------------------------------------------------------*]
  Funkcija [fold_left_no_acc f list] sprejme seznam [x0; x1; ...; xn] in
  funkcijo dveh argumentov [f] in vrne vrednost izračuna
@@ -237,7 +243,16 @@ let rec loop = ()
  - : string = "FICUS"
 [*----------------------------------------------------------------------------*)
 
-let rec fold_left_no_acc = ()
+let rec fold_left_no_acc f list = ()
+  (* let rec aux acc f list = (* Al glih tega noče, kaj je ta no_acc?*) *)
+  (* ???????? *)
+  (* let rec aux acc =
+    function
+    | [] -> acc
+    | x :: xs -> aux (f acc x) xs (* sam zdej ne vem, kaj morm dat za acc sploh ...*)
+  in
+  (* ???? *) *)
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [apply_sequence f x n] vrne seznam zaporednih uporab funkcije [f] na
@@ -251,7 +266,15 @@ let rec fold_left_no_acc = ()
  - : int list = []
 [*----------------------------------------------------------------------------*)
 
-let rec apply_sequence = ()
+let apply_sequence f x n =
+  let rec aux acc x n =
+    match n with
+    | 0 -> acc
+    | a when a < 0 -> []
+    | n -> aux (acc @ [f x]) (f x) (n - 1)
+  in
+  aux [] x n
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [filter f list] vrne seznam elementov [list], pri katerih funkcija [f]
@@ -262,7 +285,37 @@ let rec apply_sequence = ()
  - : int list = [4; 5]
 [*----------------------------------------------------------------------------*)
 
-let rec filter = ()
+let filter f list = 
+  let rec aux acc =
+    function
+    | [] -> acc
+    | x :: xs -> 
+        if (f x) 
+          then aux (acc @ [x]) xs
+          else aux acc xs
+  in
+  aux [] list
+
+  (*
+    let rec aux acc =
+    function
+    | [] -> acc
+    | x :: xs -> 
+      (* match ()   (* ali je kle if bolj eleganten ?? ! *)
+        vpraši ?:
+let oblika_trikotnika =
+  function
+  | (a, b, c) ->
+      if not (veljaven_trikotnik a b c) then
+        "neveljaven"
+      else match (a, b, c) with
+      | (0, _, _) | (_, 0, _) | (_, _, 0) -> "izrojen"
+      | (a, b, c) ->
+          if a = b && b = c then "enakostraničen"
+          else if a = b || b = c || a = c then "enakokrak"
+          else "poljuben" *)
+          *)
+  
 
 (*----------------------------------------------------------------------------*]
  Funkcija [exists] sprejme seznam in funkcijo, ter vrne vrednost [true] čim
@@ -276,7 +329,16 @@ let rec filter = ()
  - : bool = false
 [*----------------------------------------------------------------------------*)
 
-let rec exists = ()
+let exists f list = 
+  let rec aux =
+    function 
+    | [] -> false
+    | x :: xs ->
+      if (f x)
+        then true
+        else aux xs  (* match ali if ???*)
+  in 
+  aux list  (* + a da je zahteva po repni rekurziji, je v praksi, da ma aux?*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [first f default list] vrne prvi element seznama, za katerega
@@ -290,7 +352,16 @@ let rec exists = ()
  - : int = 0
 [*----------------------------------------------------------------------------*)
 
-let rec first = ()
+let first f default list =
+  let rec aux =
+    function
+    | [] -> default
+    | x :: xs ->
+      if f x
+        then x
+        else aux xs   (* kakšna je kle najlepša struktura/sistem/ najbolj pametno?*)
+  in
+  aux list
 
 
 
