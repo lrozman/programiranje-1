@@ -236,14 +236,19 @@ let rec unzip_tlrec = ()
  - : int = 12
 [*----------------------------------------------------------------------------*)
 
-let rec loop condition f x =
+let rec loop' condition f x =
   match (condition x) with
-  | true -> loop condition f (f x)
+  | true -> loop' condition f (f x)
   | false -> x
  (* ali naredim samo z if nekako ? 
   Al je ubistvu if itak problem, ker morš met isti tip, 
     pa je to pač nadomestek ? *)
+
+let rec loop condition f x =
+  if (condition x) then loop condition f (f x)
+  else x 
  
+
 (*----------------------------------------------------------------------------*]
  Funkcija [fold_left_no_acc f list] sprejme seznam [x0; x1; ...; xn] in
  funkcijo dveh argumentov [f] in vrne vrednost izračuna
@@ -264,7 +269,7 @@ let rec fold_left_no_acc f list =
         | [] -> acc
         | x :: xs -> aux (f acc x) xs
       in
-      aux prvi list
+      aux prvi xs
     )
   | _ -> failwith "Seznam ima premalo elementov." 
 
