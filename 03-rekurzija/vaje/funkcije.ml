@@ -124,6 +124,17 @@ let map' f seznam =
   *)
 let rec reverse = ()
 
+(* 
+FK:
+let obrni sez =
+  let rec revers_tlrc za_obrnit kup_nalaganja =
+    match za_obrnit with
+    | [] -> kup_nalaganja
+    | x :: xs -> reverse_tlrc xs (x :: kup_nalaganja)
+  in
+  revers_tlrc sez []
+    *)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [map_tlrec] je repno rekurzivna različica funkcije [map].
  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,15 +254,19 @@ let rec loop condition f x =
  - : string = "FICUS"
 [*----------------------------------------------------------------------------*)
 
-let rec fold_left_no_acc f list = ()
-  (* let rec aux acc f list = (* Al glih tega noče, kaj je ta no_acc?*) *)
-  (* ???????? *)
-  (* let rec aux acc =
-    function
-    | [] -> acc
-    | x :: xs -> aux (f acc x) xs (* sam zdej ne vem, kaj morm dat za acc sploh ...*)
-  in
-  (* ???? *) *)
+let rec fold_left_no_acc f list = 
+  match list with
+  | x :: (y :: xs) -> 
+    (
+      let prvi = f x y in
+      let rec aux acc =
+        function
+        | [] -> acc
+        | x :: xs -> aux (f acc x) xs
+      in
+      aux prvi list
+    )
+  | _ -> failwith "Seznam ima premalo elementov." 
 
 
 (*----------------------------------------------------------------------------*]
