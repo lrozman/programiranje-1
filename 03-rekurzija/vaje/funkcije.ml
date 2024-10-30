@@ -616,7 +616,8 @@ let izpis' p =
     function
     | [] -> acc
     | x :: xs when x = 0 -> aux acc (i + 1) xs
-    | x :: xs when x > 0 -> 
+    | x :: xs when x > 0 ->  (* Če so sam pozitivna števila, itak tega ne rabš, 
+    pokriješ vse ostalo in vam tud ne bo težiu. Oziroma tazadnga ne rabš, ups *)
       if i <> 0
         then match x with
           (* A bi se dal tko nekak narest
