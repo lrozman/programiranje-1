@@ -29,6 +29,8 @@ let rev list =
 
 (* okej, don't get, kaj je bil problem*)
 
+(* Ista je kokr uradna *)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [repeat x n] vrne seznam [n] ponovitev vrednosti [x]. Za neprimerne
  vrednosti [n] funkcija vrne prazen seznam.
@@ -49,6 +51,12 @@ let repeat x n =
   in
   aux [] x n   
 
+(* Uradna:
+let rec repeat x n = if n <= 0 then [] else x :: (repeat x (n-1))
+
+"navadna" rekurzija!
+*)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [range] sprejme število in vrne seznam vseh celih števil od 0 do
  vključno danega števila. Za neprimerne argumente funkcija vrne prazen seznam.
@@ -67,6 +75,25 @@ let range n =
     | n -> aux (n :: acc) (n - 1)
   in
   aux [] n 
+
+
+(* uradna:
+let range_not_tailrec n =
+  let rec range_from m =
+    if m > n
+    then []
+    else m :: (range_from (m + 1))
+  in range_from 0
+
+let range n =
+   let rec range_aux n acc =
+     if n < 0 then acc else range_aux (n - 1) (n :: acc)
+   in
+   range_aux n []
+  
+IF!
+
+*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [map f list] sprejme seznam [list] oblike [x0; x1; x2; ...] in
@@ -147,6 +174,20 @@ let rec map_tlrec = ()
 
 (* VPRAŠAJ NA VAJAH TEDVA *)
 
+
+(* uradna:
+let map_tlrec f list =
+  let rec map_aux list acc =
+    match list with
+    | [] -> reverse acc
+    | x :: xs -> map_aux xs (f x :: acc)
+  in
+  map_aux list []
+
+jp, očitno je z reversom boljš
+
+*)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [mapi] je ekvivalentna python kodi:
 
@@ -172,6 +213,18 @@ let mapi f =
   in
   aux [] 0
 
+  (* uradna?:
+let mapi f lst =
+  let rec mapi_aux i =
+    function
+    | [] -> []
+    | x :: xs -> (f i x) :: (mapi_aux (succ i) xs)
+  in
+  mapi_aux 0 lst
+
+sam to def ni tlrec, sej moje mogoce tud ne, ampak ja
+  *)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [zip] sprejme dva seznama in vrne seznam parov istoležnih
  elementov podanih seznamov. Če seznama nista enake dolžine vrne napako.
@@ -196,6 +249,15 @@ let zip list1 list2 =
   aux [] list1 list2
 
 
+  (* uradna!
+  let rec zip list1 list2 =
+  match list1, list2 with
+  | [], [] -> []
+  | _, [] | [], _ -> failwith "Different lengths of input lists."
+  | x :: xs, y :: ys -> (x, y) :: (zip xs ys)
+  
+  *)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [unzip] je inverz funkcije [zip], torej sprejme seznam parov
  [(x0, y0); (x1, y1); ...] in vrne par seznamov ([x0; x1; ...], [y0; y1; ...]).
@@ -212,6 +274,28 @@ let unzip =
     | x :: xs -> aux (acc1 @ [fst x]) (acc2 @ [snd x]) xs
   in
   aux [] []
+
+(*
+uradna!
+Pač oni teh stvari niso delal z aux starmi a priori, pa zdej ne vem
+
+let rec unzip = function
+  | [] -> ([], [])
+  | (x, y) :: tl -> let (list1, list2) = unzip tl in (x :: list1, y :: list2)
+
+Sam tega pa prou ne razumem cist, kako deluje ! (pač da se tko da)
+
+Očitno je pa res boljš z reversom delat:
+
+let unzip_tlrec list =
+  let rec unzip_aux list acc1 acc2 =
+    match list with
+    | [] -> (reverse acc1, reverse acc2)
+    | (x, y) :: tl -> unzip_aux tl (x :: acc1) (y :: acc2)
+  in
+  unzip_aux list [] []
+
+*)
 
 
 (*----------------------------------------------------------------------------*]
@@ -247,7 +331,24 @@ let rec loop' condition f x =
 let rec loop condition f x =
   if (condition x) then loop condition f (f x)
   else x 
- 
+
+  
+(* uradna 
+let rec loop condition f x =
+  if condition x then loop condition f (f x) else x
+
+(* Da se podobnost vidi bolje lahko zapišemo kot: *)
+
+let rec loop condition f x =
+  if condition x then
+    (* Izvedemo telo zanke. *)
+    let x = f x in
+    (* Ponovno izvedemo zanko. *)
+    loop condition f x
+  else
+    (* Pogoj zanke ni izpolnjen, zato vrnemo vrednost. *)
+    x
+    *)  
 
 (*----------------------------------------------------------------------------*]
  Funkcija [fold_left_no_acc f list] sprejme seznam [x0; x1; ...; xn] in
@@ -273,6 +374,16 @@ let rec fold_left_no_acc f list =
     )
   | _ -> failwith "Seznam ima premalo elementov." 
 
+(* za začetek mi je asistent pomagal ^ *)
+
+
+(* uradna!
+let rec fold_left_no_acc f = function
+  | [] | _ :: [] -> failwith "List too short."
+  | x :: y :: [] -> f x y
+  | x :: y :: tl -> fold_left_no_acc f ((f x y) :: tl)
+*)
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [apply_sequence f x n] vrne seznam zaporednih uporab funkcije [f] na
@@ -295,6 +406,19 @@ let apply_sequence f x n =
   in
   aux [] x n
 
+(* uradna
+brez afnee
+
+let apply_sequence f x n =
+  let rec apply_aux f x n acc =
+    if n < 0 then
+      reverse acc
+    else
+      apply_aux f (f x) (n - 1) (x :: acc)
+  in
+  apply_aux f x n []
+*)
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [filter f list] vrne seznam elementov [list], pri katerih funkcija [f]
@@ -315,6 +439,12 @@ let filter f list =
           else aux acc xs
   in
   aux [] list
+
+(* uradna:
+let rec filter f = function
+  | [] -> []
+  | x :: xs -> if f x then x :: (filter f xs) else filter f xs
+  *)
 
   (*
     let rec aux acc =
@@ -360,6 +490,14 @@ let exists f list =
   in 
   aux list  (* + a da je zahteva po repni rekurziji, je v praksi, da ma aux?*)
 
+  (* Jao men, za totalno brezveze je kle aux
+  uradna:
+
+let rec exists f = function
+  | [] -> false
+  | x :: xs -> if f x then true else exists f xs
+  *)
+
 (*----------------------------------------------------------------------------*]
  Funkcija [first f default list] vrne prvi element seznama, za katerega
  funkcija [f] vrne [true]. Če takšnega elementa ni, vrne [default].
@@ -383,6 +521,13 @@ let first f default list =
   in
   aux list
 
+
+(* enako klele:
+let rec first f default = function
+  | [] -> default
+  | x :: xs -> if f x then x else first f default xs
+
+*)
 
 
 
@@ -609,6 +754,9 @@ let izpis p =
   | x :: xs -> let seznam = xs in
   String.concat " " seznam
 
+(* Klele je problem, ker maš za superscript pac 0-9, ostale
+morš sestavlat, to sem pozabila ! *)
+
 
   (* zasilna, z ^ :*)
 let izpis' p =
@@ -637,8 +785,73 @@ let izpis' p =
   let seznam = aux [] 0 p in
   match seznam with
   | [] -> "Polinom ni bil podan"
-  | x :: xs -> let seznam = xs in
+  | x :: xs -> let seznam = xs in  (* kle porežem tud -, če je na začetku! 
+  pa cifre, če je stopnje 0, pa x če je x + 1 ...*)
   String.concat " " seznam
 
   (* Ali je neumno narejeno? ce bi lahko poimenovala člen in naredila v unem tud en
   if x > 0 ["+"] else ["-"] pa tko, bi blo lahko lepš?*)
+  
+  (* Kle tud enke nimam ločene!! *)
+
+
+let izpis'' p =
+  let sup_stopnje i =
+    let superscript_vsi =
+      ["\u{2070}"; "\u{00B9}"; "\u{00B2}"; "\u{00B3}"; "\u{2074}"; "\u{2074}"] @
+      ["\u{2075}"; "\u{2076}"; "\u{2077}"; "\u{2078}"; "\u{2079}"] in
+    let rec razbij_na_stevke acc =
+      function
+      | 0 -> acc
+      | n -> razbij_na_stevke ((Int.rem n 10) :: acc) (n / 10)
+    in
+    let superscript stevka = List.nth superscript_vsi stevka in
+    match i with
+    | a when a = 1 || a = 0 -> ""
+    | i -> (
+      razbij_na_stevke [] i
+      |> List.map superscript
+      |> String.concat ""  (* List.fold_left ( ^ ) "" *)
+      )
+  in
+  let rec aux acc i p=
+    match p with
+    | [] -> acc
+    | x :: xs when x = 0 -> aux acc (i + 1) xs
+    | x :: xs -> (
+      match x, i with
+      | x, 0 when x > 0 -> aux (["+"; string_of_int x] @ acc) (i + 1) xs
+      | x, 0 -> aux (["-"; string_of_int (abs x)] @ acc) (i + 1) xs
+      | 1, i -> aux (["+"; "x" ^ (sup_stopnje i)] @ acc) (i + 1) xs
+      | -1, i -> aux (["-"; "x" ^ (sup_stopnje i)] @ acc) (i + 1) xs
+      | n, i when n > 0 -> aux (["+"; string_of_int n; "x" ^ sup_stopnje i] @ acc) (i + 1) xs
+      | n, i -> aux (["-"; string_of_int (abs n); "x" ^ sup_stopnje i] @ acc) (i + 1) xs
+      )
+  in
+  let seznam = aux [] 0 p in
+  match seznam with
+  | [] -> "Polinom ni bil podan."
+  | x :: xs when x = "-" -> x ^ String.concat " " xs
+  | x :: xs when x = "+" -> String.concat " " xs
+  | x :: xs -> String.concat " " seznam
+
+(*
+      match x, i with
+      | x, 0 when x > 0 -> aux (["+"; string_of_int x] @ acc) (i + 1) xs
+      | x, 0 -> aux (["-"; string_of_int (abs x)] @ acc) (i + 1) xs
+      | 1, i -> aux (["+"; "x" ^ (sup_stopnje i)] @ acc) (i + 1) xs
+      | -1, i -> aux (["-"; "x" ^ (sup_stopnje i)] @ acc) (i + 1) xs
+      | n, i when n > 0 -> aux (["+"; string_of_int n; "x" ^ sup_stopnje i] @ acc) (i + 1) xs
+      | n, i -> aux (["-"; string_of_int (abs n); "x" ^ sup_stopnje i] @ acc) (i + 1) xs
+      )
+/
+      match x, i with
+      | x, 0 when x > 0 -> let clen = ["+"; string_of_int x] in aux (clen @ acc) (i + 1) xs
+      | x, 0 -> let clen = ["-"; string_of_int (abs x)] in aux (clen @ acc) (i + 1) xs
+      | 1, i -> let clen = ["+"; "x" ^ (sup_stopnje i)] in aux (clen @ acc) (i + 1) xs
+      | -1, i -> let clen = ["-"; "x" ^ (sup_stopnje i)] in aux (clen @ acc) (i + 1) xs
+      | n, i when n > 0 -> let clen = ["+"; string_of_int n; "x" ^ sup_stopnje i] in aux (clen @ acc) (i + 1) xs
+      | n, i -> let clen = ["-"; string_of_int (abs n); "x" ^ sup_stopnje i] in aux (clen @ acc) (i + 1) xs
+      )
+/
+*)
