@@ -788,53 +788,53 @@ let primer_5_15 =
 
 (* Funkcija vrača string list option, ker se je izkazalo, da je možnih rešitev lahko več, 
    funkcija pa se ne zna odločati, katero sporočilo je vsebinsko najustreznejše.*)
-   let odsifriraj niz = 
-    let besede = String.split_on_char ' ' niz in
-    if besede = [] then None 
-    else
-    let prvi_kandidati = mozne_razsiritve (String.make 26 '_') (List.nth besede 0) slovar in
-    let razsirjanje_kandidata_z_novimi beseda seznam_sifer star_kandidat =
-      let rec pomozna1 se_primerni =
-        function
-        | [] -> se_primerni
-        | x :: xs -> (
-          match dodaj_zamenjave star_kandidat (beseda, x) with
-          | Some s -> pomozna1 (s :: se_primerni) xs
-          | None -> pomozna1 se_primerni xs
-        )
-      in
-      pomozna1 [] seznam_sifer
+let odsifriraj niz = 
+  let besede = String.split_on_char ' ' niz in
+  if besede = [] then None 
+  else
+  let prvi_kandidati = mozne_razsiritve (String.make 26 '_') (List.nth besede 0) slovar in
+  let razsirjanje_kandidata_z_novimi beseda seznam_sifer star_kandidat =
+    let rec pomozna1 se_primerni =
+      function
+      | [] -> se_primerni
+      | x :: xs -> (
+        match dodaj_zamenjave star_kandidat (beseda, x) with
+        | Some s -> pomozna1 (s :: se_primerni) xs
+        | None -> pomozna1 se_primerni xs
+      )
     in
-    let rec glavna (kandidati : string list) seznam_besed =
-      match seznam_besed with
-      | [] -> Some kandidati
-      | beseda :: b's ->
-        (
-          let seznamek =
-          (mozne_razsiritve (String.make 26 '_') beseda slovar) 
-          |> List.map (fun kljuc -> sifriraj kljuc beseda)
-          in
-          let ostali =
-            List.map (razsirjanje_kandidata_z_novimi beseda seznamek) kandidati
-            |> List.flatten
-          in
-          match ostali with 
-          | [] -> None (* Že ni več možnih kandidatov za ključe, funkcija lahko konča. *)
-          | _::_ -> glavna ostali b's
-        )
+    pomozna1 [] seznam_sifer
+  in
+  let rec glavna (kandidati : string list) seznam_besed =
+    match seznam_besed with
+    | [] -> Some kandidati
+    | beseda :: b's ->
+      (
+        let seznamek =
+        (mozne_razsiritve (String.make 26 '_') beseda slovar) 
+        |> List.map (fun kljuc -> sifriraj kljuc beseda)
+        in
+        let ostali =
+          List.map (razsirjanje_kandidata_z_novimi beseda seznamek) kandidati
+          |> List.flatten
+        in
+        match ostali with 
+        | [] -> None (* Že ni več možnih kandidatov za ključe, funkcija lahko konča. *)
+        | _::_ -> glavna ostali b's
+      )
+  in
+  let iskani_kljuci = glavna prvi_kandidati (List.tl besede) in
+  let sifriraj' niz kljuc = (* Nova funkcija zaradi delne uporabe na ključih in dodanega znaka '_', ki ga prva ni predpostavljala.*)
+    let sifriraj_znak znak =
+      if 'A' <= znak && znak <= 'Z' then
+        String.get kljuc (indeks znak)
+      else znak
     in
-    let iskani_kljuci = glavna prvi_kandidati (List.tl besede) in
-    let sifriraj' niz kljuc = (* Nova funkcija zaradi delne uporabe na ključih in dodanega znaka '_', ki ga prva ni predpostavljala.*)
-      let sifriraj_znak znak =
-        if 'A' <= znak && znak <= 'Z' then
-          String.get kljuc (indeks znak)
-        else znak
-      in
-      String.map sifriraj_znak niz   
-    in
-    match iskani_kljuci with
-    | None -> None
-    | Some x -> Some (List.map (sifriraj' niz) x)
+    String.map sifriraj_znak niz   
+  in
+  match iskani_kljuci with
+  | None -> None
+  | Some x -> Some (List.map (sifriraj' niz) x)
 
 let primer_5_16 = sifriraj quick_brown_fox "THIS IS A VERY HARD PROBLEM"
 (* val primer_5_16 : string = "VKBO BO T AUSD KTSQ MSJHNUF" *)
