@@ -20,9 +20,14 @@ module type NAT = sig
 
   val eq  : t -> t -> bool
   val zero : t
-  (* Dodajte manjkajoče! *)
-  (* val to_int : t -> int *)
-  (* val of_int : int -> t *)
+  val enka : t
+  val sestevanje : t -> t -> t
+  (* val odstevanje : t -> t -> t option - to bi blo lepš, ampak bo pol teži,
+  tkoda bomo vračal 0, če je negativno, al neki *)
+  val odstevanje : t -> t -> t
+  val mnozenje : t -> t -> t
+  val to_int : t -> int
+  val of_int : int -> t
 end
 
 (*----------------------------------------------------------------------------*
@@ -36,9 +41,21 @@ end
 module Nat_int : NAT = struct
 
   type t = int
-  let eq x y = failwith "later"
+  let eq x y = (x = y)
   let zero = 0
-  (* Dodajte manjkajoče! *)
+  let enka = 1
+  let sestevanje x y = x + y
+  (* let odstevanje x y = 
+    if x - y >= 0 then Some (x - y)
+    else None *)
+  let odstevanje x y = 
+    if x - y >= 0 then x - y
+    else 0
+  let mnozenje x y = x * y
+  let to_int x = x
+  let of_int x = 
+    if x >= 0 then x
+    else 0
 
 end
 
@@ -53,10 +70,48 @@ end
 
 module Nat_peano : NAT = struct
 
-  type t = unit (* To morate spremeniti! *)
-  let eq x y = failwith "later"
-  let zero = () (* To morate spremeniti! *)
-  (* Dodajte manjkajoče! *)
+  type t = Nic | Naslednik of t
+  let rec eq x y = (* delal bi tud sam let eq x y = x = y*)
+    match x, y with
+    | Nic, Nic -> true
+    | Nic, _ -> false
+    | _, Nic -> false
+    | Naslednik x', Naslednik y' -> eq x' y'
+  let zero = Nic
+  let enka = Naslednik Nic
+  let rec sestevanje x y =
+    match x with
+    | Nic -> y
+    | Naslednik x' -> Naslednik (sestevanje x' y)
+  (* let rec odstevanje x y =
+    match x, y with
+    | x, Nic -> Some x
+    | Nic, Naslednik y' -> None
+    | Naslednik x', Naslednik y' -> odstevanje x' y' *)
+  let rec odstevanje x y =
+    match x, y with
+    | x, Nic -> x
+    | Nic, Naslednik y' -> Nic
+    | Naslednik x', Naslednik y' -> odstevanje x' y'
+  let mnozenje x y =
+    let rec aux acc = function
+    | Nic -> acc (* Nat_peano.enka ? al samo enka? POGLEJ DOMA, kjer ti dela ocaml -> acc + y *)
+    | Naslednik x' -> aux (sestevanje acc y) x'
+    in
+    aux Nic y
+  let to_int x = 
+    let rec aux acc =
+      function
+      | Nic -> acc
+      | Naslednik x' -> aux (acc + 1) x'
+    in
+    aux 0 x
+  let of_int x =
+    let rec aux acc = function
+      | a when a <= 0 -> acc
+      | a -> aux (Naslednik acc) (a - 1)
+    in
+    aux Nic x
 
 end
 
@@ -79,9 +134,24 @@ end
 let sum_nat_100 = 
   (* let module Nat = Nat_int in *)
   let module Nat = Nat_peano in
-  Nat.zero (* to popravite na ustrezen izračun *)
-  (* |> Nat.to_int *)
+  let rec aux acc n = 
+    if (Nat.eq n Nat.zero) then acc
+    else aux (Nat.sestevanje acc n) (Nat.odstevanje n Nat.enka)
+    (* | Nat.zero -> acc - Ni fiksna vrednost in ni konstruktor, ne morte delat matcha. Sam if pač
+    | Nat.t -> aux (Nat.sestevanje acc Nat.t) (Nat.odstevanje Nat.t Nat.enka) *)
+  in
+  aux Nat.zero (Nat.of_int 100)  
+  |> Nat.to_int
 (* val sum_nat_100 : int = 5050 *)
+
+(* Kako se to uporablja? *)
+(* Lahko bi šli n*(n-1)/2, če si definiram deljenje z 2, 
+lahko greš rekurzivno od 100 navzdol al od 0 navzgor prištevamo ...
+uporabljaš pa sam stvari iz modula *)
+
+(* Da se rename symbol, desn klik pa neki, btw 
+ctr shift l je pa uno k Pretnar uporabla, k vse iste spremenljivke označ in loh pretipka*)
+  
 
 (*----------------------------------------------------------------------------*
  ## Kompleksna števila
@@ -135,6 +205,7 @@ let sum_nat_100 =
 module type COMPLEX = sig
   type t
   val eq : t -> t -> bool
+  val zero : t
   (* Dodajte manjkajoče! *)
 end
 
@@ -147,7 +218,8 @@ module Cartesian : COMPLEX = struct
 
   type t = {re : float; im : float}
 
-  let eq x y = failwith "later"
+  let eq x y = x.re = y.re && x.im = y.im
+  let zero = {re = 0; im = 0}
   (* Dodajte manjkajoče! *)
 
 end
@@ -168,7 +240,14 @@ module Polar : COMPLEX = struct
   let rad_of_deg deg = (deg /. 180.) *. pi
   let deg_of_rad rad = (rad /. pi) *. 180.
 
-  let eq x y = failwith "later"
+  let stand_kot x = ()
+  let eq x y = 
+    (x.mgn = y.mgn) && (Float.rem (x.arg - y.arg) (2*pi) = 0) (* Razlika kotov mora bit deljiva z 2pi*)
+  
+  let zero = {magn = 0; arg = 0} (* "mora" bit fiksna stvar. *)
+
+  (* funkcija, ki standardizira kot bo uporabna (se odšteva 2pi, dokler si nad 2pi in odšteva, dokler <0)*)
+  
   (* Dodajte manjkajoče! *)
 
 end
