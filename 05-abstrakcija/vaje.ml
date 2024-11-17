@@ -206,6 +206,12 @@ module type COMPLEX = sig
   type t
   val eq : t -> t -> bool
   val zero : t
+  val one : t
+  val i : t
+  val negacija : t -> t
+  val konjugacija : t -> t
+  val sestevanje : t -> t -> t
+  val mnozenje : t -> t -> t
   (* Dodajte manjkajoče! *)
 end
 
@@ -219,7 +225,16 @@ module Cartesian : COMPLEX = struct
   type t = {re : float; im : float}
 
   let eq x y = x.re = y.re && x.im = y.im
-  let zero = {re = 0; im = 0}
+  let zero = {re = 0.; im = 0.}
+  let one = {re = 1.; im = 0.}
+  let i = {re = 0.; im = 1.}
+  let negacija z = { re = -. z.re; im = -. z.im }
+  let konjugacija z = {z with im = -. z.im}
+  let sestevanje z w = { re = z.re +. w.re; im = z.im +. w.im }
+  let mnozenje z w = 
+    let realna = z.re *. w.re -. z.im *. w.im in
+    let imaginarna = z.re *. w.im +. z.im *. w.re in
+    {re = realna; im = imaginarna}
   (* Dodajte manjkajoče! *)
 
 end
@@ -240,14 +255,57 @@ module Polar : COMPLEX = struct
   let rad_of_deg deg = (deg /. 180.) *. pi
   let deg_of_rad rad = (rad /. pi) *. 180.
 
-  let stand_kot x = ()
-  let eq x y = 
-    (x.mgn = y.mgn) && (Float.rem (x.arg - y.arg) (2*pi) = 0) (* Razlika kotov mora bit deljiva z 2pi*)
+  (* let eq x y = 
+    (x.magn = y.magn) && (Float.rem (x.arg -. y.arg) (2.*.pi) = 0.) (* Razlika kotov mora bit deljiva z 2pi*) *)
   
-  let zero = {magn = 0; arg = 0} (* "mora" bit fiksna stvar. *)
+  let zero = {magn = 0.; arg = 0.} (* "mora" bit fiksna stvar. *)
 
-  (* funkcija, ki standardizira kot bo uporabna (se odšteva 2pi, dokler si nad 2pi in odšteva, dokler <0)*)
+  (* funkcija, ki standardizira kot, bo uporabna (se odšteva 2pi, dokler si nad 2pi in odšteva, dokler <0)*)
+  let rec stand_kot z =
+    match (z.arg) with
+    | phi when phi < 0. -> stand_kot {z with arg = (z.arg +. 2. *. pi)}
+    | phi when phi >= (2.*.pi) -> stand_kot {z with arg = (z.arg -. 2. *. pi)} 
+    | _ -> z
   
-  (* Dodajte manjkajoče! *)
+  let eq x y =
+    let x = stand_kot x in
+    let y = stand_kot y in
+    (x.magn = y.magn) && (x.arg = y.arg)
+  
+  let one = {magn = 1.; arg = 0.}
+  let i = {magn = 1.; arg = 0.5 *. pi}
+  
+  let negacija z = stand_kot {z with arg = z.arg +. pi}
+  let konjugacija z = stand_kot {z with arg = 2.*.pi -. z.arg}
+
+  (*let sestevanje z w = zero *)
+  (* magn bo diagonala paralelograma s kotom en - drug, pa stranicama magn od obeh
+   arg bo pa en-drug/(neko razmerje magnitud) ? A je to sploh res?
+   Al sam projiciram, pa sestejem normalno pa odprojiciram al je to bedna rešitev?
+   sam je pa vsaj rešitev, tkoda grem to narest pa rešitve pogledat *)
+  let sestevanje z w = 
+    let zx, zy = z.magn *. cos z.arg, z.magn *. sin z.arg in (* kera python fora, kera sm ej *)
+    let wx, wy = w.magn *. cos w.arg, w.magn *. sin w.arg in
+    let vsota = (zx +. wx, zy +. wy) in
+    (* nazaj to dat bo pain in the neck, ker bo treba matchat, v kerem kvadrantu je blo ...*)
+    (* a znam iz kartezičnih dobit polarne? Bi mogla znat, ne? *)
+    let kart_v_pol (x, y) =
+      let r = (x ** 2. +. y ** 2.)**(0.5) in
+      let kot (x, y) =
+        match x, y with
+        | 0., 0. -> 0. 
+        | 0., y -> (y /. (abs_float y)) *. (pi /. 2.) (*ne morem delit pol*)
+        | x, y when x > 0. -> atan (y /. x) 
+        | x, y -> pi +. (atan (y /. x)) (* x je že <= 0 *) 
+        (* a je to prou? Pač recmo *)
+      in
+      { magn = r; arg = kot (x, y)} |> stand_kot
+    in
+  kart_v_pol vsota
+
+
+  let mnozenje z w =
+    { magn = z.magn *. w.magn ; arg = z.arg +. w.arg } 
+    |> stand_kot
 
 end
