@@ -1,0 +1,125 @@
+"Razvit morte občutek, kako delajo turingovi stroji"
+
+# Turingovi stroji
+
+## Naloga 1
+
+Definirajte k-tračni turingov stroj
+
+## Naloga 2
+
+Dan je jezik $J = \{ xyz | x, y, z \in \{0, 1\}^*, |x| = |y| = |z|, x (xor) y = z \}$.
+
+1. Sestavite deterministični n-tračni turingov stroj, ki preveri, ali je dana beseda v jeziku $J$.
+
+2. Sestavite deterministični enotračni turingov stroj, ki preveri, ali je dana beseda v jeziku $J$.
+
+## Naloga 3
+
+Pokažite, da lahko vsak n-tračni turingov stroj simuliramo z enotračnim turingovim strojem.
+
+
+(Naloga 3 je ubistvu to, da se dokaže ekvivalenco. Pač k-tračni je enotračnemu ekvivalenten)
+
+kazalček na traku je "glava"
+
+
+-> Naloga 1 (vmes nism poslušala?)
+hočmo dokazat, da je neki ekvivalentno?
+Za več-tračne je ponavad množica stanj enaka, sam prehodna funkcija je širša.
+še vedno mamo eno stanje, sam mel bomo k kopij znakov.
+GLava je na istem mestu, sam kledamo k znakcev naenkrat ubistvu.
+Delta : gama^k x Q -> gama^k x Q x {L, R}^k je prehodna funkcija.
+Za vsako se torej loh premikamo, kokr hočmo, sam dobimo pa celo k-terico,
+vzame pač vektor pa stanje in na vseh unih mestih neki napiše in premakne glave. (Pač skupi gleda vektor, se mi zdi)
+(Samo popravl smo prehodno delta funkcijo, Za celo definicijo bi vse ostalo sam prepisal)
+Poglej si definicijo na zapiskih!
+
+
+-> Naloga 2
+1.
+(zakaj se splača met k trakov)
+(sami si izberemo n)
+(preverl bomo, a je na spodnem traku napisana ena beseda v tem jeziku.
+znaki 0 in 1 (zvezdica je poljubno mnogo), ampak so samo konkatenirane (zložene skp) pa isto dolge, pa x(xor)y = z)
+(če je (x)1 (y)0 (z je, k sta različna)1
+(10)(11)(01)
+na vsaki komponentni gledaš: na prve msta x=1 in y=1, in 1xor1 = 0, in pol je z=0 na prvi.
+Seprav dobimo nek 0,1-niz, razbijemo na tri enako dolge dele in pol gremo po taprvih dveh in more bit tretji x xor y. Pol je okej beseda)
+
+tri besede mamo. Na začetku dobimo na traku vse tri, eno za drugo.
+trak ... * (* je prazen znak) x0 ... xn yo ... yn z0 ... zn *  (noben nam še ni niti oblubu, da je to deljivo s tri, dolžina)
+
+Nekak mormo dobit istoležni znak povsod.
+Najprej si mormo to prekopirat trikrat, da bomo lahko sploh mel tri glave.
+Kakšno stanje bi to blo? (kako si bomo prekopiral)
+
+... * * * ...
+      ^
+... * * * ...
+      ^
+... * x0 ... xn yo ... yn z0 ... zn * ...
+      ^
+
+(dal bi se tko, da bi najprej preštel vse, zračunal dolžine x (y in z), mel še en trak, velik stanj, carry, pač en trak za števc.
+Mi mamo n znakov, pač če bi vedl, da je n vedno 5, bi loh mel 5 stanj tralala.
+Sam pač to ne bi funkcioniral, ker mormo mi vnaprej stanja napisat, ker jih ne mormo vmes dodajat. 
+Tkoda nardil bomo tko, da celo prekopiramo na dva trakova)
+
+S0 (ko vidm ničlo: pišem ničlo, ostanem v tem stanju, ker bom ponovila vajo, in grem v desno)
+-S0: loop vase z (0, *, *)/(0, 0, 0), R^3  (piše se tko, da je (kar vidm)/(kar se napiše). Pa ona riše puščice, kam se premaknemo )
+     loop vase (1, *, *)/(1, 1, 1), R^3
+     spremenimo stanje v S1 za (*,*,*)/(*,*,*), L^3  --> S1
+     (če dobimo karkol druzga, besede ne sprejmemo. Mi mamo na začetku spodn trak pa dva, k mata sam presledke)  ((ej to je vse zlo kul))
+
+... * x0 ... xn yo ... yn z0 ... zn * ...
+                                    ^
+... * x0 ... xn yo ... yn z0 ... zn * ...
+                                    ^
+... * x0 ... xn yo ... yn z0 ... zn * ...     
+                                    ^
+
+Zdej bi se pa radi postavl v pravem številu korakov z eno glavo na x0, z drugo na y0 in s tretjo na z0
+(enga premikamo po 1, enga po 2, enga pa po 3. Nehamo, ko glava, k se je premikala po 3, prbije na zvezdico)
+
+-S1: (nobena glava ne vid zvezdice) _/_ (samo prekopiramo), () (drgač rabmo tri stanja, zdej krajšamo)
+    (da vidmo, kok hitr eksplodira število stanj:) (nope, ker bi dobil malo morje stanj, da bi to posimuliral. PREMISLI DOMA)
+    (ker ne znamo narest, da bi bla glava prmir, tkoda bi mel velik stanj. Ker se glave vse hkrati premikajo. 
+    V tok omejenem jeziku, kokr ga mamo, je brutalno pisat to, ker ja, morš jih premikat za različno, (1, 2, 3), grejo pa hkrat po ena (in pol neki naprej, nazaj))
+    (tud ponavad ljudje, k pišejo turingove stroje, velik krajšajo.)
+    OKRAJŠAVA  loop vase _/_ (LLL, LL, L)
+    spremenimo stanje, ko (*, _, _)/(*, _, _), R^3 -> S2 (in zdej, k gremo v desno, če je slučajno zvezdica, ni okej beseda).
+    (ko najdemo zvezdico, vemo, da je smo pršli do konca, in če jih je preveč, ni deljiva s tri. Al neki, mogoče smo +/- 1 kej falil (kje po modulu pridemo))
+... * x0 ... xn yo ... yn z0 ... zn * ...
+                        ^ (^)         
+... * x0 ... xn yo ... yn z0 ... zn * ...
+             ^  (^)                    
+... * x0 ... xn yo ... yn z0 ... zn * ...     
+    ^ (^)                                    
+(v oklepaju je, kam gremo pol direkt pogledat in torej tud, kje mamo zdej glave)
+
+-S2 (tuki prevermo, da če je beseda prou deljiva s tri, seprav, neki gremo v desno, pa pač če je prvi znak je ok, če je pa kkšna zvezdica preveč, pa ne)
+
+-S3: (0, 0, 0)/_ (kopiramo. 0,0,0 je okej)
+     011/_, R^3  -> S3
+     101/_, R^3  -> S3
+     110/_, R^3  -> S3
+     ta zgornja štiri so okej, to je loop vase (xor trojice pustimo. Ko pridemo do konca po z-jih, pol pač dokončno sprejmemo)
+     Če vidmo karkoli druzga, ne sprejmemo (loh bi mel stanje za to, sam ponavad se napiše sam, kar sprejmemo)
+    _,_,* (x-i bojo že na y0, y-oni na z0, z je na zvezdiciu: konc)  --> S
+
+-S je sprejem.
+
+(da vidmo, kako se stanja pišejo in da ni treba vsega pisat, sam zgodbico, kaj se dogaja)
+
+
+Ej, to je res kul! Teoretično kul in izračunljivost in vse to in programiranje in vse !!!! :)
+
+
+O Turingovih strojih je ogromno napisano na internetu.
+
+
+Za drugi del naloge so to standardni izreki iz tega dela računalništva, "to piše v vsakem učbeniku, kjer kej piše o turingovih strojih,
+materiala je zadost". Tkoda to je poučno premislt, da se pogledat.
+
+DOMA!
