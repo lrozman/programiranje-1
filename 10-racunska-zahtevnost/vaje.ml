@@ -17,14 +17,25 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  # insert 7 [];;
  - : int list = [7]
 [*----------------------------------------------------------------------------*)
-
+let insert y sez0 =
+  let rec aux acc = function
+    | [] -> List.reverse (y :: acc)
+    | x :: xs when x < y -> aux (x :: acc) xs (* dej premisli, to zna bit narobe*)
+    | x :: xs -> List.concat (List.reverse (x :: y :: acc)) xs
+  in
+  aux [] sez0
 
 (*----------------------------------------------------------------------------*]
  Prazen seznam je že urejen. Funkcija [insert_sort] uredi seznam tako da
  zaporedoma vstavlja vse elemente seznama v prazen seznam.
 [*----------------------------------------------------------------------------*)
 
-
+let insert_sort sez = 
+  let rec aux acc = function
+    | [] -> acc
+    | x :: xs -> aux (insert x acc) xs
+  in
+  aux [] sez
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
  Urejanje z Izbiranjem
@@ -44,6 +55,7 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  (Hitreje je obrniti vrstni red seznama kot na vsakem koraku uporabiti [@].)
 [*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*)
 
+(* čez vse v še obstoječem seznamu, najt minimum in pač grejo navrh ...*)
 
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
  Urejanje z Izbiranjem na Tabelah
@@ -59,6 +71,7 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
  elementom na meji med deloma (in s tem dodamo na konec urejenega dela).
  Postopek končamo, ko meja doseže konec tabele.
 [*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*)
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [swap a i j] zamenja elementa [a.(i)] and [a.(j)]. Zamenjavo naredi
