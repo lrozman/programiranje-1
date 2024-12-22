@@ -79,14 +79,15 @@ def obrni : {A : Type} → {n : Nat} → Vektor A n → Vektor A n :=
   | .prazen => .prazen
   | .sestavljen x xs' => stakni (obrni xs') (Vektor.sestavljen x Vektor.prazen)
 
-def glava : {A : Type} → {n : Nat} → Vektor A n → A :=
+def glava : {A : Type} → {n : Nat} → Vektor A (Nat.succ n) → A :=
   fun xs =>
     match xs with
-    | .sestavljen x xs' => x
-    | .prazen => by sorry --???????????????
+    | .sestavljen x _ => x
 
-def rep : sorry :=
-  sorry
+def rep : {A : Type} → {n : Nat} → Vektor A (Nat.succ n) → Vektor A n :=
+  fun xs =>
+    match xs with
+    | .sestavljen _ xs' => xs'
 
 /------------------------------------------------------------------------------
  ## Predikatni račun
@@ -109,24 +110,28 @@ theorem forall_implies' : {A : Type} → {P : Prop} → {Q : A → Prop} →
   (∀ x, (P → Q x)) ↔ (P → ∀ x, Q x) := by
   intros A P Q
   apply Iff.intro
-  . intro PimQ
-    intro hP
-    intro x
+  . intros PimQ hP x
     apply PimQ
     exact hP 
-  . intro PimQall
-    intro x
-    intro hP
+  . intros PimQall x hP
     apply PimQall
     exact hP
-    -- ?????
+
 
 theorem paradoks_pivca :
   {G : Type} → {P : G → Prop} →
   (g : G) →  -- (g : G) pove, da je v gostilni vsaj en gost
   ∃ (p : G), (P p → ∀ (x : G), P x) := by
   intros G P g
-  sorry --??????????????????
+  rw [← Classical.not_forall_not]
+  intro za_vse_nevelja
+  apply za_vse_nevelja g
+  intro Pg
+  intro x
+  apply Classical.byContradiction
+  intro ne_pije
+  --?????????
+
   
 
 /------------------------------------------------------------------------------
@@ -191,36 +196,14 @@ theorem visina_zrcali :
     rw [ihl, ihd]
     apply Nat.max_comm
 
-theorem elementi_elementi' :
-  {A : Type} → (t : Drevo A) →
-  elementi t = elementi' t := by
-  intro A
-  intro t
-  induction t with
-  | prazno => 
-    simp [elementi, elementi', elementi'.aux]
-  | sestavljeno l x d ihl ihd =>
-    simp [elementi, elementi', elementi'.aux]
-    rw [ihl, ihd]
-    calc 
-      elementi' l ++ x :: elementi' d
-      _ = elementi'.aux l (x :: elementi'.aux d []) := by sorry
-
-theorem concat_empty : {A : Type} → (l : List A) → l ++ [] = l := by
-  intro A
-  intro l
-  induction l with
-  | nil => simp
-  | cons x xs ih => simp
-
-theorem conc_app_eq : {A : Type} → (x : A) -> (xs : List A) → x :: xs = [x] ++ xs :=
+theorem lema_conc_eq_app : {A : Type} → (x : A) -> (xs : List A) → x :: xs = [x] ++ xs :=
   by
     intros A x xs
     induction xs with
     | nil => simp
     | cons y ys ih => simp
 
-theorem elementi'_aux : {A : Type} → (t : Drevo A) → (acc : List A) → 
+theorem lema_elementi'_aux : {A : Type} → (t : Drevo A) → (acc : List A) → 
   elementi'.aux t [] ++ acc = elementi'.aux t acc := by
   intro A
   intro t
@@ -235,11 +218,24 @@ theorem elementi'_aux : {A : Type} → (t : Drevo A) → (acc : List A) →
     calc
     elementi'.aux l [] ++ x :: elementi'.aux d [] ++ acc
     _ = elementi'.aux l [] ++ (x :: elementi'.aux d []) ++ acc := by rfl
-    _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d []) ++ acc := by rw [conc_app_eq]
+    _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d []) ++ acc := by rw [lema_conc_eq_app]
     _ = elementi'.aux l [] ++ [x] ++ elementi'.aux d [] ++ acc := by rw [← List.append_assoc]
     _ = (elementi'.aux l [] ++ [x]) ++ (elementi'.aux d [] ++ acc) := by rw [List.append_assoc]
     _ = (elementi'.aux l [] ++ [x]) ++ elementi'.aux d acc := by rw [ihd]
     _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d acc) := by rw [List.append_assoc]
-    _ = elementi'.aux l [] ++ (x :: elementi'.aux d acc) := by rw [← conc_app_eq]
+    _ = elementi'.aux l [] ++ (x :: elementi'.aux d acc) := by rw [← lema_conc_eq_app]
     _ = elementi'.aux l (x :: elementi'.aux d acc) := by rw [ihl]
 
+theorem elementi_elementi' :
+  {A : Type} → (t : Drevo A) →
+  elementi t = elementi' t := by
+  intro A
+  intro t
+  induction t with
+  | prazno => 
+    simp [elementi, elementi', elementi'.aux]
+  | sestavljeno l x d ihl ihd =>
+    simp [elementi, elementi', elementi'.aux]
+    rw [ihl, ihd]
+    simp [elementi']
+    rw [lema_elementi'_aux]
