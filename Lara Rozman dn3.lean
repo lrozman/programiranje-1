@@ -74,6 +74,7 @@ def stakni : {A : Type} → {m n : Nat} → Vektor A m → Vektor A n → Vektor
   | .prazen => by rw [Nat.add_comm]; exact ys
   | .sestavljen x xs' => by rw [Nat.add_right_comm]; exact Vektor.sestavljen x (stakni xs' ys)
 
+
 def obrni : {A : Type} → {n : Nat} → Vektor A n → Vektor A n :=
   fun xs => match xs with
   | .prazen => .prazen
@@ -127,12 +128,18 @@ theorem paradoks_pivca :
   intro za_vse_nevelja
   apply za_vse_nevelja g
   intro Pg
-  intro x
-  apply Classical.byContradiction
-  intro ne_pije
-  --?????????
+  intro p
+  have not_imp_p : ¬(P p → ∀ (x : G), P x) := by apply za_vse_nevelja
+  have Pp_and_y : P p ∧ ¬ ∀ (x : G), P x := by
+    have prehodna_ekvivalenca : ¬(P p → ∀ (x : G), P x) ↔ P p ∧ ¬ ∀ (x : G), P x := by apply Classical.not_imp
+    cases prehodna_ekvivalenca with
+    | intro lema =>
+      apply lema
+      exact not_imp_p
+  cases Pp_and_y with
+  | intro Pp =>
+    exact Pp
 
-  
 
 /------------------------------------------------------------------------------
  ## Dvojiška drevesa
@@ -170,12 +177,12 @@ def elementi' : {A : Type} → Drevo A → List A :=
     | .sestavljeno l x d => aux l (x :: aux d acc)
   fun t => aux t []
 
+
 theorem zrcali_zrcali :
   {A : Type} → (t : Drevo A) →
   zrcali (zrcali t) = t := 
 by
-  intro A
-  intro t
+  intros A t
   induction t with
   | prazno => simp [zrcali]
   | sestavljeno l x d ihl ihd =>
@@ -187,8 +194,7 @@ by
 theorem visina_zrcali :
   {A : Type} → (t : Drevo A) →
   visina (zrcali t) = visina t := by
-  intro A
-  intro t
+  intros A t
   induction t with
   | prazno => simp [zrcali]
   | sestavljeno l x d ihl ihd =>
@@ -196,17 +202,10 @@ theorem visina_zrcali :
     rw [ihl, ihd]
     apply Nat.max_comm
 
-theorem lema_conc_eq_app : {A : Type} → (x : A) -> (xs : List A) → x :: xs = [x] ++ xs :=
-  by
-    intros A x xs
-    induction xs with
-    | nil => simp
-    | cons y ys ih => simp
 
 theorem lema_elementi'_aux : {A : Type} → (t : Drevo A) → (acc : List A) → 
   elementi'.aux t [] ++ acc = elementi'.aux t acc := by
-  intro A
-  intro t
+  intros A t
   induction t with
   | prazno => 
     intro acc
@@ -217,20 +216,18 @@ theorem lema_elementi'_aux : {A : Type} → (t : Drevo A) → (acc : List A) →
     rw [← ihl]
     calc
     elementi'.aux l [] ++ x :: elementi'.aux d [] ++ acc
-    _ = elementi'.aux l [] ++ (x :: elementi'.aux d []) ++ acc := by rfl
-    _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d []) ++ acc := by rw [lema_conc_eq_app]
+    _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d []) ++ acc := by rfl
     _ = elementi'.aux l [] ++ [x] ++ elementi'.aux d [] ++ acc := by rw [← List.append_assoc]
     _ = (elementi'.aux l [] ++ [x]) ++ (elementi'.aux d [] ++ acc) := by rw [List.append_assoc]
     _ = (elementi'.aux l [] ++ [x]) ++ elementi'.aux d acc := by rw [ihd]
     _ = elementi'.aux l [] ++ ([x] ++ elementi'.aux d acc) := by rw [List.append_assoc]
-    _ = elementi'.aux l [] ++ (x :: elementi'.aux d acc) := by rw [← lema_conc_eq_app]
+    _ = elementi'.aux l [] ++ (x :: elementi'.aux d acc) := by rfl
     _ = elementi'.aux l (x :: elementi'.aux d acc) := by rw [ihl]
 
 theorem elementi_elementi' :
   {A : Type} → (t : Drevo A) →
   elementi t = elementi' t := by
-  intro A
-  intro t
+  intros A t
   induction t with
   | prazno => 
     simp [elementi, elementi', elementi'.aux]

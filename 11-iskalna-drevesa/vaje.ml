@@ -5,7 +5,9 @@
  bodisi prazna, bodisi pa vsebujejo podatek in imajo dve (morda prazni)
  poddrevesi. Na tej točki ne predpostavljamo ničesar drugega o obliki dreves.
 [*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*)
-
+type 'a drevo =
+  | Empty
+  | Node of 'a drevo * 'a * 'a drevo
 
 (*----------------------------------------------------------------------------*]
  Definirajmo si testni primer za preizkušanje funkcij v nadaljevanju. Testni
@@ -17,7 +19,15 @@
        /   / \
       0   6   11
 [*----------------------------------------------------------------------------*)
+let test_tree2 = Node (Node (Empty, 0, Empty), 2, Empty)
+let test_tree7 = Node (Node (Empty, 6, Empty), 7, Node ( Empty, 11, Empty))
+let test_tree = Node (test_tree2, 5, test_tree7)
 
+(* pozabla sm na leaf*)
+
+let leaf a = Node (Empty, a, Empty)
+
+(* ne se trudt z repno rekurzijo, ker je pr dreves mal bolj zakomplicirana*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [mirror] vrne prezrcaljeno drevo. Na primeru [test_tree] torej vrne
@@ -32,7 +42,9 @@
  Node (Node (Node (Empty, 11, Empty), 7, Node (Empty, 6, Empty)), 5,
  Node (Empty, 2, Node (Empty, 0, Empty)))
 [*----------------------------------------------------------------------------*)
-
+let rec mirror = function
+     | Empty -> Empty
+     | Node (l, x, d) -> Node (mirror d, x, mirror l)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [height] vrne višino oz. globino drevesa, funkcija [size] pa število
@@ -43,7 +55,13 @@
  # size test_tree;;
  - : int = 6
 [*----------------------------------------------------------------------------*)
+let rec height = function
+     | Empty -> 0
+     | Node (l, x, d) -> 1 + height l + height d
 
+let rec size = function
+     | Empty -> 0
+     | Node (l, x, d) -> 1 + size l + size d
 
 (*----------------------------------------------------------------------------*]
  Funkcija [map_tree f tree] preslika drevo v novo drevo, ki vsebuje podatke
@@ -54,7 +72,16 @@
  Node (Node (Node (Empty, false, Empty), false, Empty), true,
  Node (Node (Empty, true, Empty), true, Node (Empty, true, Empty)))
 [*----------------------------------------------------------------------------*)
+let rec map_tree : ('a -> 'b) -> 'a drevo -> 'b drevo = 
+     fun f tree ->
+          match tree with
+          | Empty -> Empty
+          | Node (l, x, d) -> Node (map_tree f l, f x, map_tree f d)
 
+let rec map_tree' f tree =
+     match tree with
+     | Empty -> Empty
+     | Node (l, x, d) -> Node (map_tree' f l, f x, map_tree' f d)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [list_of_tree] pretvori drevo v seznam. Vrstni red podatkov v seznamu
@@ -63,7 +90,10 @@
  # list_of_tree test_tree;;
  - : int list = [0; 2; 5; 6; 7; 11]
 [*----------------------------------------------------------------------------*)
-
+let rec list_of_tree tree =
+     match tree with
+     | Empty -> []
+     | Node (l, x, d) -> list_of_tree l @ [x] @ list_of_tree d
 
 (*----------------------------------------------------------------------------*]
  Funkcija [is_bst] preveri ali je drevo binarno iskalno drevo (Binary Search 
@@ -75,7 +105,21 @@
  # test_tree |> mirror |> is_bst;;
  - : bool = false
 [*----------------------------------------------------------------------------*)
-
+(* dve možnosti. Ena neučikovita, da greš čez vse.
+ Loh mamo pa pomožno, k pogleda, a je binarno iskalno in vrne min in max
+ in pol neki neki ?  Vrne int, bool, int. min, a je, max
+ Levo poddrevo mora bit bst, desno mora bit in pol še min pa max gledaš,
+ da so na levi manjši in desni večji.
+ Če mi leva stran že vrne njegov maksimum, morm sam maksimum s sabo primerjat.
+ Vrnem maksimum pa minimum, k ju itak z dol poberem, pa bool, a štima.
+ Aja, ta prva ni la sploh. Loh tud uporabš prejšnjo, nardiš list pa neki
+ primerjaš, če sta enaka, pač ta pa un urejen*)
+(* Neki neki, nardiš si tud neki edge case, da je list na levi/desni neki*)
+(*let is_bst tree =
+     match tree with
+     | Empty -> true
+     | Node (l, x, d) ->
+          (* primerjaš x z minom pa maxom in poddreves*)*)
 
 (*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*]
  V nadaljevanju predpostavljamo, da imajo dvojiška drevesa strukturo BST.
@@ -90,7 +134,7 @@
  # member 3 test_tree;;
  - : bool = false
 [*----------------------------------------------------------------------------*)
-
+(* niso še uravnotežena, pač.*)
 
 (*----------------------------------------------------------------------------*]
  Funkcija [member2] ne privzame, da je drevo bst.
