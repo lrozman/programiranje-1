@@ -19,9 +19,9 @@ Natančno definirajte pogoje, da funkcija `f` uredi seznam.
 [*----------------------------------------------------------------------------*)
 let insert y sez0 =
   let rec aux acc = function
-    | [] -> List.reverse (y :: acc)
+    | [] -> List.rev (y :: acc)
     | x :: xs when x < y -> aux (x :: acc) xs (* dej premisli, to zna bit narobe*)
-    | x :: xs -> List.concat (List.reverse (x :: y :: acc)) xs
+    | x :: xs -> List.concat [(List.rev (x :: y :: acc)); xs] (* To zgleda neučinkovito al kaj?*)
   in
   aux [] sez0
 
@@ -57,6 +57,26 @@ let insert_sort sez =
 
 (* čez vse v še obstoječem seznamu, najt minimum in pač grejo navrh ...*)
 
+let choose_sort sez =
+  let rec poisci_minimum_aux min preverjeni sez =
+    match sez with
+    | x :: xs -> 
+      (if x < min then poisci_minimum_aux x (min :: preverjeni) xs
+      else poisci_minimum_aux min (x :: preverjeni) xs)
+    | [] -> min, preverjeni
+  in
+  let rec aux urejen neurejen =
+    match neurejen with
+    | [] -> urejen
+    | x :: xs ->
+      let min, preverjeni = poisci_minimum_aux x [] xs in (* To bi mogl delat al kaj? Ne da morm celo funkcijo popravljat?*)
+      (* sam js rabm minimum ven iz seznama vzet*)
+      aux (min :: urejen) preverjeni
+  in
+  aux [] sez |> List.rev
+  (* to je vse neprevejreno, ker mi docker ne dela, pa zgleda precej sumljivo ....*)
+    
+
 (*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*]
  Urejanje z Izbiranjem na Tabelah
 [*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*)
@@ -85,19 +105,47 @@ let insert_sort sez =
  - : int array = [|0; 4; 2; 3; 1|]
 [*----------------------------------------------------------------------------*)
 
+let swap a i j =
+  let x = a.(i) in
+  a.(i) <- a.(j); (*let neki = neki in je podpičje, ker vrne unit ...*)
+  a.(j) <- x
+
 
 (*----------------------------------------------------------------------------*]
  Funkcija [index_min a lower upper] poišče indeks najmanjšega elementa tabele
  [a] med indeksoma [lower] and [upper] (oba indeksa sta vključena).
  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- index_min [|0; 2; 9; 3; 6|] 2 4 = 4
+ index_min [|0; 2; 9; 3; 6|] 2 4 = 3
 [*----------------------------------------------------------------------------*)
 
+let index_min a lower upper =
+  let rec aux i_min min i =
+    match i with
+    | i when i > upper -> i_min
+    | i -> 
+      (if a.(i) < min then aux i a.(i) (i + 1)
+      else aux i_min min (i + 1))
+  in 
+  aux lower a.(lower) lower
 
 (*----------------------------------------------------------------------------*]
  Funkcija [selection_sort_array] implementira urejanje z izbiranjem na mestu. 
 [*----------------------------------------------------------------------------*)
 
+let selection_sort_array a =
+  let n = Array.length a in
+  let rec aux boundary_sorted =
+    match boundary_sorted with
+    | i when i = n -> ()
+    | boundary_sorted -> (
+      let i_min = index_min a boundary_sorted (n - 1) in
+      swap a boundary_sorted i_min;
+      aux (boundary_sorted + 1)
+    )
+  in
+  aux 0
+
+let test1 = [|1; 4; 6; 7; 2; 3|]
 
 (*----------------------------------------------------------------------------*]
  Funkcija [min_and_rest list] vrne par [Some (z, list')] tako da je [z]
@@ -105,10 +153,41 @@ let insert_sort sez =
  pojavitvijo elementa [z]. V primeru praznega seznama vrne [None]. 
 [*----------------------------------------------------------------------------*)
 
+let min_and_rest list = 
+  match list with
+  | [] -> None
+  | x :: xs -> (
+    let rec poisci_minimum_aux min preverjeni sez =
+      match sez with
+      | x :: xs -> 
+        (if x < min then poisci_minimum_aux x (min :: preverjeni) xs
+        else poisci_minimum_aux min (x :: preverjeni) xs)
+      | [] -> min, preverjeni
+    in
+    Some (poisci_minimum_aux x [] xs)
+  )
+(* a nam je vseen, v kerem vrstnem redu je ta seznam vrnjen?*)
+    
+
 (*----------------------------------------------------------------------------*]
  Funkcija [selection_sort] je implementacija zgoraj opisanega algoritma.
  Namig: Uporabi [min_and_rest] iz prejšnje naloge.
 [*----------------------------------------------------------------------------*)
+
+(* let selection_sort sez =
+  match sez with
+  | [] -> failwith "Prazen seznam"
+  | x :: xs -> (
+    let rec aux sez =
+      let opt = min_and_rest sez in
+      let min, preostali = Option.get (opt) in
+      List.rev (min :: (aux preostali))
+    in
+    aux sez
+  )
+    *) (* To je vse narobe. Razmisl pa nared, ker more vrnt un seznam
+  in ne vem, a znam to brez akumulatorja*)
+
 
 
 (*----------------------------------------------------------------------------*]
