@@ -47,20 +47,52 @@ end *)
 module Tape : TAPE = struct
   type t = Trak of char list * char * char list
 
+  let char_list_to_string cl = String.concat "" (List.map (String.make 1) cl)
+  (*Če bom še rabla to funkcijo, sem dala ven*)
+  let string_to_char_list niz = List.init (String.length niz) (String.get niz)
+  (*Če bom rabla, dam ven iz make, pa mam kle*)
+
   let make niz =
     let char_list = List.init (String.length niz) (String.get niz) in
     match char_list with
     | [] -> Trak ([], ' ', [])
     | x :: xs -> Trak ([], x, xs)
 
-  let char_list_to_string cl = String.concat "" (List.map (String.make 1) cl)
+
   let print = function (* Grem narest najprej cel string in ga pol sam sprintat*)
   (* Kako se lepš dostopa do tega ?!*)
-  | Trak (levi, glava, desni) -> (
+  | Trak (levi_cl, glava_char, desni_cl) -> (
     (* Porezat morm odvečne presledke najprej*)
-    failwith "TODO"
+    let pomozna_desni desni_char_list =
+      let rec aux_iskanje_konca i_konca i sez =
+        match sez with
+        | [] -> i_konca (*če je praten, bo 0, bo prazen string nakonc*)
+        | x :: xs when x = ' ' -> aux_iskanje_konca i_konca (i + 1) xs
+        | x :: xs -> aux_iskanje_konca i (i + 1) xs (*Torej raj nardim, da gre do vključno, in se poveča vsakič, k je neprazen znak.*)
+      in
+      let indeks_konca_niza = aux_iskanje_konca 0 0 desni_char_list in
+      let zberi_začetek_v_niz i_konca cl =
+        let rec aux_v_niz acc i l =
+          match i, l with
+          | _, [] -> acc
+          | i, x :: xs when i <= i_konca -> aux_v_niz (acc ^ Char.escaped x) (i + 1) xs
+          | i, x :: xs -> acc (* Nas ne zanima več*)
+          (* to men zgleda zelo ne dobr časovno, ker gre kvadratično čez string
+          Sam kako pa list.concat to nardi? ...... ???*)
+        in
+        aux_v_niz "" 0 cl
+      in
+      zberi_začetek_v_niz indeks_konca_niza desni_char_list
+      (*hotla sm neki z List.mapi in pol vrže ven vse ostale.
+      Une spremeni v string, tisto pa vrže ven, kar je odveč. A probam?*)
+    in
+    let desni_niz = pomozna_desni desni_char_list in
+    let levi_niz = char_list_to_string levi_cl
+    |> failwith "TODOzaleve"
+    (* TE FUNKCIJE SO PREDOLGE: DAJ JIH VEN IZ PRINTA (al kaj) PA UPORABI ZAZADNO V .ipynb*)
   )
-    
+  (* A hočm da za prazna leva/desna nardi prazen string, za prazno glavo pa " "?
+  Da bo loh puščica spodi?*)  
 
     (* let print_stat name num =
       Printf.printf "%s: %F\n%!" name num *)
