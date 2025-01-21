@@ -34,7 +34,7 @@ type state = string
  poskrbite tako za učinkovitost kot za preglednost kode.
 [*----------------------------------------------------------------------------*)
 
-(* module type TAPE = sig
+ module type TAPE = sig
   type t
 
   val make : string -> t
@@ -42,15 +42,17 @@ type state = string
   val read : t -> char
   val move : direction -> t -> t
   val write : char -> t -> t
-end *)
+end
 
 module Tape : TAPE = struct
   type t = Trak of char list * char * char list
 
-  let char_list_to_string cl = String.concat "" (List.map (String.make 1) cl)
+  (*let char_list_to_string cl = String.concat "" (List.map (String.make 1) cl)*)
   (*Če bom še rabla to funkcijo, sem dala ven*)
+  (* Pozab, to ma neko biggest loser slovenia casovno zahtevnost pomoje.*)
   let string_to_char_list niz = List.init (String.length niz) (String.get niz)
   (*Če bom rabla, dam ven iz make, pa mam kle*)
+  (* A raj to nardim na roke, da je zihr O(n), sam sej te implementirane menda niso glupe?*)
 
   let make niz =
     let char_list = List.init (String.length niz) (String.get niz) in
@@ -58,47 +60,71 @@ module Tape : TAPE = struct
     | [] -> Trak ([], ' ', [])
     | x :: xs -> Trak ([], x, xs)
 
-
-  let print = function (* Grem narest najprej cel string in ga pol sam sprintat*)
-  (* Kako se lepš dostopa do tega ?!*)
-  | Trak (levi_cl, glava_char, desni_cl) -> (
-    (* Porezat morm odvečne presledke najprej*)
-    let pomozna_desni desni_char_list =
-      let rec aux_iskanje_konca i_konca i sez =
-        match sez with
-        | [] -> i_konca (*če je praten, bo 0, bo prazen string nakonc*)
-        | x :: xs when x = ' ' -> aux_iskanje_konca i_konca (i + 1) xs
-        | x :: xs -> aux_iskanje_konca i (i + 1) xs (*Torej raj nardim, da gre do vključno, in se poveča vsakič, k je neprazen znak.*)
-      in
-      let indeks_konca_niza = aux_iskanje_konca 0 0 desni_char_list in
-      let zberi_začetek_v_niz i_konca cl =
-        let rec aux_v_niz acc i l =
-          match i, l with
-          | _, [] -> acc
-          | i, x :: xs when i <= i_konca -> aux_v_niz (acc ^ Char.escaped x) (i + 1) xs
-          | i, x :: xs -> acc (* Nas ne zanima več*)
-          (* to men zgleda zelo ne dobr časovno, ker gre kvadratično čez string
-          Sam kako pa list.concat to nardi? ...... ???*)
+  let print = function
+    | Trak (levi, glava, desni) -> (
+      let obrni_ltrim_prestej_levi levi_char_list = 
+        let rec aux_ltrim_in_prestej i flag acc sez =
+          match flag, sez with
+          | _, [] -> i, List.rev acc
+          | false, x :: xs when x = ' ' -> aux_ltrim_in_prestej 0 false [] xs
+          | false, x :: xs -> aux_ltrim_in_prestej (i + 1) true (x :: acc) xs
+          | true, x :: xs -> aux_ltrim_in_prestej (i + 1) true (x :: acc) xs
         in
-        aux_v_niz "" 0 cl
+        List.rev levi_char_list 
+        |> aux_ltrim_in_prestej 0 false []
+      in 
+      (* Vrne levi seznam pripravljen za print in njegovo dolžino. *)
+      let rec print_char_list = function 
+        | [] -> ()
+        | c :: cs -> Printf.printf "%c" c ; print_char_list cs
       in
-      zberi_začetek_v_niz indeks_konca_niza desni_char_list
-      (*hotla sm neki z List.mapi in pol vrže ven vse ostale.
-      Une spremeni v string, tisto pa vrže ven, kar je odveč. A probam?*)
-    in
-    let desni_niz = pomozna_desni desni_char_list in
-    let levi_niz = char_list_to_string levi_cl
-    |> failwith "TODOzaleve"
-    (* TE FUNKCIJE SO PREDOLGE: DAJ JIH VEN IZ PRINTA (al kaj) PA UPORABI ZAZADNO V .ipynb*)
-  )
-  (* A hočm da za prazna leva/desna nardi prazen string, za prazno glavo pa " "?
-  Da bo loh puščica spodi?*)  
+      let dolzina, levi_za_print = obrni_ltrim_prestej_levi levi in
+      print_char_list levi_za_print; 
+      (* Sprintan je levi del traku. *)
+      Printf.printf "%c" glava;
+      (* Sprintana je glava. *)
+      let print_desni desni_char_list =
+        let rec aux_printd_in_iskanje_konca stevec_presledkov sez = (* Sej v pomožnem so samo presledki!*)
+          match sez with
+          | [] -> ()
+          | x :: xs when x = ' ' -> aux_printd_in_iskanje_konca (stevec_presledkov + 1) xs (* Če je presledek, prešteje, kok jih mora natisnt. *)
+          (* To ma bs časovno zahtevnost, naredi raje seznam, al kaj. *)
+          | x :: xs -> (
+            for i=1 to stevec_presledkov do
+              Printf.printf "%c" ' '
+            done;
+            Printf.printf "%c" x ; 
+            aux_printd_in_iskanje_konca 0 xs (*Torej znak, če smo vmes shranjeval presledke, jih zdele še naprintamo*)
+          )
+        in
+        aux_printd_in_iskanje_konca 0 desni_char_list
+      in
+      print_desni desni;
+      (* Sprintan je desni del traku. *)
+      Printf.printf "%s" "\n";
+      for i=1 to dolzina do
+        Printf.printf "%c" ' '
+      done;
+      Printf.printf "%s" "^\n"
+      (* Sprintana je druga vrsta. *)
+    )
 
-    (* let print_stat name num =
-      Printf.printf "%s: %F\n%!" name num *)
-  let read _ = ' '
-  let move _ _ = ()
-  let write _ _ = ()
+  let read = function
+    | Trak (_, glava, _) -> glava
+  let move dir trak = 
+    match dir, trak with
+    | Left, Trak (levi, glava, desni) -> (
+      match levi with
+      | [] -> Trak ([], ' ', glava :: desni)
+      | x :: xs -> Trak (xs, x, glava :: desni)
+    )
+    | Right, Trak (levi, glava, desni) -> (
+      match desni with
+      | [] -> Trak (glava :: levi, ' ', [])
+      | x :: xs -> Trak (glava :: levi, x, xs)
+    )
+  let write c = function
+    | Trak (levi, glava, desni) -> Trak (levi, c, desni)
 end
 
 let primer_trak = Tape.(
