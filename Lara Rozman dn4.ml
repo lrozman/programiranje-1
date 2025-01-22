@@ -35,14 +35,18 @@ type state = string
 [*----------------------------------------------------------------------------*)
 
  module type TAPE = sig
-  type t = { levi : char list; glava : char; desni: char list}
-  (* A je to legalna poteza. Prej je blo sam type t*)
+  type t
+  (* type t = { levi : char list; glava : char; desni: char list} *)
+  (* A je to legalna poteza. Prej je blo sam type t.
+  VPRAŠANJE!!!!! Ja, ni splošen. Ampak sori teb? 
+  Grem probat še to spremenit? *)
 
   val make : string -> t
   val print : t -> unit
   val read : t -> char
   val move : direction -> t -> t
   val write : char -> t -> t
+  val glava : t -> char (* ?!?!?!?!?*)
 end
 
 module Tape : TAPE = struct
@@ -127,6 +131,8 @@ module Tape : TAPE = struct
       | x :: xs -> { levi = trak.glava :: trak.levi; glava = x; desni = xs }
     )
   let write c trak = {trak with glava = c } 
+
+  let glava {glava} = glava
 
 end
 
@@ -253,18 +259,21 @@ end
 
 
 module type MACHINE = sig
-  type t = {
+  type t
+  (* type t = {
     simboli : char list;
     prazni_simbol : char;
     stanja : state list;
     zacetno_stanje : state;
     prehodna_funkcija : (state * char, state * char * direction) SlovarPrehodov.t;
-  } (* A morm tud kle to narest (prej je blo sam type t?)*)
+  } A morm tud kle to narest (prej je blo sam type t?) *)
 
   val make : state -> state list -> t
   val initial : t -> state
   val add_transition : state -> char -> state -> char -> direction -> t -> t
   val step : t -> state -> Tape.t -> (state * Tape.t) option
+  (* VPRAŠANJE, ali lahko dodamo to sem ? Oziroma, kako drugače rešit to??*)
+  val zacetno_stanje : t -> state (* A LAHKO ?!?!?!?*)
 end
 
 module Machine : MACHINE = struct
@@ -286,7 +295,7 @@ module Machine : MACHINE = struct
     { ts with prehodna_funkcija = SlovarPrehodov.dodaj (stanje1, char1) (stanje2, char2, dir) ts.prehodna_funkcija }
 
   let step { prehodna_funkcija } (stanje: state) (trak: Tape.t) = 
-    let navodilo = SlovarPrehodov.najdi (stanje, trak.glava) prehodna_funkcija in
+    let navodilo = SlovarPrehodov.najdi (stanje, Tape.glava trak) prehodna_funkcija in (*Prej kle, trak.glava*)
     match navodilo with
     | None -> None (*failwith "Nedefinirano" (* Al kaj? *)*)
     | Some (st, c, dir) ->
@@ -297,6 +306,9 @@ module Machine : MACHINE = struct
     (* let korak = SlovarPrehodov.najdi stanje *)
   (* `step`, ki za dano stanje in trak izvede en korak stroja, če je to mogoče. *)
   (* A to pol vrne novo stanje al kaaaaj nardi ??!?!?!?!?!*)
+  
+  let zacetno_stanje {zacetno_stanje} = zacetno_stanje
+
 end
 
 (*----------------------------------------------------------------------------*
@@ -329,9 +341,9 @@ let slow_run (ts : Machine.t) niz =
   (* Seprav kle nakonc done-a ni več v slovarju funkcij in se ustav, ker je bil None vrnjen ? *)
   let trak = ref (Tape.make niz) in
   Tape.print !trak;
-  Printf.printf "%s\n" ts.zacetno_stanje;
+  Printf.printf "%s\n" (Machine.zacetno_stanje ts); (* ??????????!!!!!!!!!!!!!! kaj je boljš?!*)
   let quit_loop = ref false in
-  let stanje = ref ts.zacetno_stanje in
+  let stanje = ref (Machine.zacetno_stanje ts) in
   while not !quit_loop do
     match (Machine.step ts !stanje !trak) with
     | None -> quit_loop := true
@@ -385,7 +397,7 @@ let speed_run (ts: Machine.t) niz =
   ker do unih itak ne dostopaš? Nikol več, ker ne morš. ? *)
   let trak = ref (Tape.make niz) in
   let quit_loop = ref false in
-  let stanje = ref ts.zacetno_stanje in
+  let stanje = ref (Machine.zacetno_stanje ts) in
   while not !quit_loop do
     match (Machine.step ts !stanje !trak) with
     | None -> 
@@ -426,7 +438,58 @@ let primer_speed_run =
  Implementacijo in tipe ugotovite sami.
 [*----------------------------------------------------------------------------*)
 
-(* let binary_increment' =
+let for_state stanje1 sez machine =
+  let ts = ref machine in
+  let rec list_aux = function
+    | [] -> ()
+    | l :: ls -> (
+      let quit_loop = ref false in
+      let l1 = ref l in
+      while not !quit_loop do
+        match !l1 with
+        | [] -> quit_loop := true
+        | nabor :: nabori -> (
+          let char1, stanje2_opt, char2, dir = nabor in
+          let stanje2 = ref "" in
+          if Option.is_some stanje2_opt then stanje2 := Option.get stanje2_opt 
+          else stanje2 := stanje1;
+          ts := Machine.add_transition stanje1 char1 !stanje2 char2 dir (!ts);
+          l1 := nabori
+        )
+      done;
+      list_aux ls
+      )
+  in
+  list_aux sez;
+  !ts
+
+let for_character char st_ch_dir_nabor =
+  let state2, char_opt, dir = st_ch_dir_nabor in
+  if Option.is_none char_opt then [(char, state2, char, dir)]
+  else [(char, state2, Option.get char_opt, dir)]
+
+let for_characters niz st_ch_dir_nabor =
+  let state2, char_opt, dir = st_ch_dir_nabor in
+  let char_some = ref false in
+  if Option.is_some char_opt then char_some := true else char_some := false;
+  let dolzina = String.length niz in
+  let rec aux acc indeks = 
+    match indeks with
+    | i when i = dolzina -> acc
+    | i -> 
+      if !char_some then aux ((niz.[i], state2, Option.get char_opt, dir) :: acc) (i+1)
+      else aux ((niz.[i], state2, niz.[i], dir) :: acc) (i+1)
+  in
+  aux [] 0 
+  
+let move dir = (None, None, dir)
+let switch_and_move stanje2 dir = (Some stanje2, None, dir)
+let write_and_move char2 dir = (None, Some char2, dir)
+let write_switch_and_move char2 stanje2 dir = (Some stanje2, Some char2, dir)
+
+
+
+let binary_increment' =
   Machine.make "right" ["carry"; "done"]
   |> for_state "right" [
     for_characters "01" @@ move Right;
@@ -435,8 +498,19 @@ let primer_speed_run =
   |> for_state "carry" [
     for_character '1' @@ write_and_move '0' Left;
     for_characters "0 " @@ write_switch_and_move '1' "done" Left
-  ]   *)
+  ]  
 (* val binary_increment' : Machine.t = <abstr> *)
+
+(* A TO POMEN, DA ONI HOČJO, DA JE Machine.t abstrakten, AL
+DA PAČ NE POKAŽEJO, KAKŠN TIP NEJ BO? K DRGAČ NE MORM DO PREHODNE
+DOSTOPAT ?! SEJ A KJE RES RABM?
+Ker ostalo je neuporabno.
+Aja ne. Lih to. Začetno stanje rabm! ????????!!!!!!!!!
+Rešitev 1: ali lahko dodamo v signaturo stvari? Kok ilegalno je to?
+Itak neki smo že. Ampak men je lepš, da je Machine abstract type
+pa mamo evaluator začetnega stanja posebi.
+?!?!?!??!?!?!?!?!?!?!?!?!?!??!?!?!?!? 
+In tud, kaj s trakom*)
 
 (*----------------------------------------------------------------------------*
  ## Primeri Turingovih strojev
@@ -459,7 +533,44 @@ let primer_speed_run =
  Sestavite Turingov stroj, ki začetni niz obrne na glavo.
 [*----------------------------------------------------------------------------*)
 
-let reverse = ()
+(* let binary_increment' =
+  Machine.make "right" ["carry"; "done"]
+  |> for_state "right" [
+    for_characters "01" @@ move Right;
+    for_character ' ' @@ switch_and_move "carry" Left
+  ]
+  |> for_state "carry" [
+    for_character '1' @@ write_and_move '0' Left;
+    for_characters "0 " @@ write_switch_and_move '1' "done" Left
+  ]   *)
+let reverse = 
+  Machine.make "desno" ["isci_levo"; "nesi0"; "nesi1"; "poisciM"; "brisanje_in_done"]
+  |> for_state "desno" [
+    for_characters "01" @@ move Right;
+    for_character ' ' @@ write_switch_and_move 'M' "isci_levo" Left
+  ]
+  |> for_state "isci_levo" [
+    for_character 'M' @@ move Left;
+    for_character '0' @@ write_switch_and_move 'M' "nesi0" Right;
+    for_character '1' @@ write_switch_and_move 'M' "nesi1" Right;
+    for_character ' ' @@ switch_and_move "brisanje_in_done" Right
+  ]
+  |> for_state "nesi0" [
+    for_characters "M01" @@ move Right;
+    for_character ' ' @@ write_switch_and_move '0' "poisciM" Left;
+  ]
+  |> for_state "nesi1" [
+    for_characters "M01" @@ move Right;
+    for_character ' ' @@ write_switch_and_move '1' "poisciM" Left;
+  ]
+  |> for_state "poisciM" [
+    for_characters "01" @@ move Left;
+    for_character 'M' @@ switch_and_move "isci_levo" Left
+  ]
+  |> for_state "brisanje_in_done" [
+    for_character 'M' @@ write_and_move ' ' Right;
+    (* for_characters "01" je pa done *)
+  ]
 
 (* let primer_reverse = speed_run reverse "0000111001" *)
 (* 
@@ -476,9 +587,61 @@ let reverse = ()
  Sestavite Turingov stroj, ki podvoji začetni niz.
 [*----------------------------------------------------------------------------*)
 
-let duplicate = ()
+let duplicate_niz = 
+  Machine.make "posci_konec" ["poisci_zacetek"; "prepisi_znak"; "0naM"; "1naM";
+    "nesi0"; "nesi1"; "najdiM"; "poisci_znak"; "0naN"; "1naN"; "brisanje_in_konec"]
+  |> for_state "posci_konec" [
+    for_characters "01" @@ move Right;
+    for_character ' ' @@ write_switch_and_move 'N' "poisci_zacetek" Left;
+  ]
+  |> for_state "poisci_zacetek" [
+    for_characters "01" @@ move Left;
+    for_character ' ' @@ write_switch_and_move 'M' "prepisi_znak" Right
+  ]
+  |> for_state "prepisi_znak" [
+    for_character '0' @@ write_switch_and_move 'M' "0naM" Left;
+    for_character '1' @@ write_switch_and_move 'M' "1naM" Left; (*Ali še kej sem?*)
+    for_character 'N' @@ switch_and_move "poisci_znak" Left
+  ]
+  |> for_state "0naM" [
+    for_character 'M' @@ write_switch_and_move '0' "nesi0" Right
+  ]
+  |> for_state "1naM" [
+    for_character 'M' @@ write_switch_and_move '1' "nesi1" Right
+  ]
+  |> for_state "nesi0" [
+    for_characters "01NM" @@ move Right;
+    for_character ' ' @@ write_switch_and_move '0' "najdiM" Left
+  ]
+  |> for_state "nesi1" [
+    for_characters "01NM" @@ move Right;
+    for_character ' ' @@ write_switch_and_move '1' "najdiM" Left
+  ]
+  |> for_state "najdiM" [
+    for_characters "01N" @@ move Left;
+    for_character 'M' @@ switch_and_move "prepisi_znak" Right
+  ]
+  |> for_state "poisci_znak" [
+    for_characters "NM" @@ move Left;
+    for_character '0' @@ write_switch_and_move 'M' "0naN" Right;
+    for_character '1' @@ write_switch_and_move 'M' "1naN" Right;
+    for_character ' ' @@ switch_and_move "brisanje_in_konec" Right
+  ]
+  |> for_state "0naN" [
+    for_character 'M' @@ write_and_move 'N' Right;
+    for_character 'N' @@ write_switch_and_move '0' "poisci_znak" Left
+  ]
+  |> for_state "1naN" [
+    for_character 'M' @@ write_and_move 'N' Right;
+    for_character 'N' @@ write_switch_and_move '1' "poisci_znak" Left
+  ]
+  |> for_state "brisanje_in_konec" [
+    for_characters "NM" @@ write_and_move ' ' Right
+  ]
+(* joooj, ker sm js idiot. Ja, js sm podvojila cel niz. Mogla bi podvojit vsak znak.
+Looool. Pa dej no, eno uro sm ga pisala ....*)
 
-(* let primer_duplicate = speed_run duplicate "010011" *)
+let primer_duplicate = speed_run duplicate "010011"
 (* 
 001100001111       
 ^

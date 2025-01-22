@@ -1,0 +1,3 @@
+https://cs3110.github.io/textbook/chapters/basics/printing.html
+Vse kle pač.
+Pa cel ocaml.org, libraries pa docs.
